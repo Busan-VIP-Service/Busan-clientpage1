@@ -103,6 +103,13 @@
             margin-bottom: 8px;
             margin-top: 15px;
         }
+        /* 선택 항목 표시용 태그 스타일 */
+        .optional-tag {
+            color: #555;
+            font-size: 10px;
+            font-weight: normal;
+            margin-left: 4px;
+        }
         .options-group {
             display: flex;
             gap: 8px;
@@ -271,6 +278,10 @@
             color: #d4af37;
             margin-bottom: 10px;
         }
+        .required-star {
+            color: #ff4d4d; /* 선명한 빨간색 */
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -291,16 +302,29 @@
             </div>
         </div>
         <div class="content" id="formContent">
-            <h2>Busan Nightlife</h2>
-            <div class="subtitle">Exclusive VIP Curation</div>
+            <h2>Busan VIP Nightlife</h2>
+            <div class="subtitle">Exclusive VIP Package</div>
+            <p style="font-size: 12px; color: #888; margin-bottom: 20px;">
+            <span class="required-star">*</span> Required fields
+            </p>
 
-            <label class="section-label">Your Name</label>
+            <!-- 필수 항목 -->
+            <label class="section-label">Your Name <span class="required-star">*</span></label>
             <input type="text" id="nameInput" placeholder="Enter your name">
 
-            <label class="section-label">Visit Date (Schedule)</label>
+            <label class="section-label">Company Name <span class="optional-tag">(Optional)</span></label>
+            <input type="text" id="companyInput" placeholder="Enter your company name">
+
+            <!-- 선택 항목으로 변경 -->
+            <label class="section-label">Job Title / Position <span class="optional-tag">(Optional)</span></label>
+            <input type="text" id="titleInput" placeholder="e.g., Director, Manager, CEO">
+
+            <!-- 필수 항목 -->
+            <label class="section-label">Visit Date (Schedule) <span class="required-star">*</span></label>
             <input type="date" id="dateInput">
 
-            <label class="section-label">Party Size</label>
+            <!-- 선택 항목들 -->
+            <label class="section-label">Party Size <span class="required-star">*</span></label>
             <div class="options-group">
                 <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
                 <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
@@ -309,14 +333,14 @@
                 <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="More than 4"><label for="p5">5+</label></div>
             </div>
 
-            <label class="section-label">Preferred Vibe</label>
+            <label class="section-label">Preferred Vibe <span class="required-star">*</span></label>
             <div class="options-vertical">
                 <div class="option-vertical-item"><input type="radio" id="v1" name="vibe" value="Casual Bar"><label for="v1">Casual Lounge & Bar</label></div>
                 <div class="option-vertical-item"><input type="radio" id="v2" name="vibe" value="Dynamic Night"><label for="v2">Dynamic & Private Room</label></div>
                 <div class="option-vertical-item"><input type="radio" id="v3" name="vibe" value="Ultimate VIP"><label for="v3">Ultimate VIP Experience</label></div>
             </div>
 
-            <label class="section-label">Estimated Budget (USD)</label>
+            <label class="section-label">Estimated Budget (USD) <span class="required-star">*</span></label>
             <div class="options-vertical">
                 <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="500 - 1000"><label for="b1">$500 - $1,000</label></div>
                 <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="1000 - 2000"><label for="b2">$1,000 - $2,000</label></div>
@@ -324,16 +348,17 @@
                 <div class="option-vertical-item"><input type="radio" id="b4" name="budget" value="No limit"><label for="b4">No Limit / Unlimited VIP</label></div>
             </div>
 
-            <label class="section-label">Preferred Guide / Interpreter Type</label>
+            <label class="section-label">Preferred Guide / Interpreter Type <span class="required-star">*</span></label>
             <div class="options-vertical">
                 <div class="option-vertical-item"><input type="radio" id="guide_pro" name="guideType" value="Professional Interpreter"><label for="guide_pro">Professional Business Interpreter (English Fluent)</label></div>
                 <div class="option-vertical-item"><input type="radio" id="guide_basic" name="guideType" value="Basic Guide"><label for="guide_basic">Basic Guide (English Not Available / Standard)</label></div>
             </div>
 
-            <label class="section-label">Hotel Name (Exact Name Required)</label>
+            <label class="section-label">Hotel Name <span class="required-star">*</span></label>
             <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
 
-            <label class="section-label">Contact (Country Code & Number / ID)</label>
+            <!-- 필수 항목 -->
+            <label class="section-label">Contact (Country Code & Number / ID) <span class="required-star">*</span></label>
             <div class="contact-group">
                 <select id="countryCode">
                     <option value="+1" selected>🇺🇸 +1 (USA / Canada)</option>
@@ -393,22 +418,19 @@
         function currentSlide(index) { currentIndex = index; updateSlidePosition(); clearInterval(autoSlideTimer); autoSlideTimer = setInterval(nextSlide, 3500); }
 
         function openConfirmModal() {
+            // 필수 항목만 검증 (Name, Company, Date, Contact)
             const nameVal = document.getElementById('nameInput').value.trim();
+            const companyVal = document.getElementById('companyInput').value.trim();
             const dateVal = document.getElementById('dateInput').value;
-            const hotelVal = document.getElementById('hotelInput').value.trim();
             const contactVal = document.getElementById('contactInput').value.trim();
-            
-            const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
-            const vibeChecked = document.querySelector('input[name="vibe"]:checked');
-            const budgetChecked = document.querySelector('input[name="budget"]:checked');
-            const guideChecked = document.querySelector('input[name="guideType"]:checked');
 
-            if (!nameVal || !dateVal || !hotelVal || !contactVal || !partySizeChecked || !vibeChecked || !budgetChecked || !guideChecked) {
-                alert("Please fill in all required fields, select schedule, and options.");
+            if (!nameVal || !companyVal || !dateVal || !contactVal) {
+                alert("Please fill in the required fields (*Name, Company, Date, Contact).");
                 return;
             }
 
-            document.getElementById('confirmText').innerHTML = `<b>${nameVal}</b>,<br>Date: <b>${dateVal}</b><br>Hotel: <b>${hotelVal}</b><br>Proceed with request?`;
+            const titleVal = document.getElementById('titleInput').value.trim() || "Not specified";
+            document.getElementById('confirmText').innerHTML = `<b>${nameVal}</b> (${companyVal} / ${titleVal})<br>Date: <b>${dateVal}</b><br>Proceed with request?`;
             document.getElementById('confirmModal').classList.add('active');
         }
 
@@ -416,31 +438,42 @@
             document.getElementById('confirmModal').classList.remove('active');
 
             const nameVal = document.getElementById('nameInput').value.trim();
+            const companyVal = document.getElementById('companyInput').value.trim();
+            const titleVal = document.getElementById('titleInput').value.trim() || "N/A";
             const dateVal = document.getElementById('dateInput').value;
             const countryCode = document.getElementById('countryCode').value;
             const contactVal = document.getElementById('contactInput').value.trim();
             const fullContact = `${countryCode} ${contactVal}`;
 
-            const hotelVal = document.getElementById('hotelInput').value.trim();
+            // 선택 항목들은 입력 안 했으면 'Not specified'로 처리
+            const hotelVal = document.getElementById('hotelInput').value.trim() || "N/A";
             const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
             const vibeChecked = document.querySelector('input[name="vibe"]:checked');
             const budgetChecked = document.querySelector('input[name="budget"]:checked');
             const guideChecked = document.querySelector('input[name="guideType"]:checked');
 
+            const partySizeVal = partySizeChecked ? partySizeChecked.value : "N/A";
+            const vibeVal = vibeChecked ? vibeChecked.value : "N/A";
+            const budgetVal = budgetChecked ? `$${budgetChecked.value}` : "N/A";
+            const guideVal = guideChecked ? guideChecked.value : "N/A";
+
             const botToken = '8175244050:AAH2roCg92UBZfAv5eL4niMbM6LavE0VSoc';
             const chatId = '-1004353056100';
             const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
+            // 텔레그램 메시지 구성
             const message = 
                 `🚨 [New VIP Reservation Request]\n\n` +
-                `- Name: ${nameVal}\n` +
-                `- Visit Date: ${dateVal}\n` +
-                `- Party Size: ${partySizeChecked.value}\n` +
-                `- Vibe: ${vibeChecked.value}\n` +
-                `- Budget: $${budgetChecked.value}\n` +
-                `- Guide Type: ${guideChecked.value}\n` +
+                `- Name: ${nameVal} (Required)\n` +
+                `- Company: ${companyVal} (Required)\n` +
+                `- Job Title: ${titleVal}\n` +
+                `- Visit Date: ${dateVal} (Required)\n` +
+                `- Party Size: ${partySizeVal}\n` +
+                `- Vibe: ${vibeVal}\n` +
+                `- Budget: ${budgetVal}\n` +
+                `- Guide Type: ${guideVal}\n` +
                 `- Hotel: ${hotelVal}\n` +
-                `- Contact: ${fullContact}`;
+                `- Contact: ${fullContact} (Required)`;
 
             try {
                 await fetch(telegramUrl, {

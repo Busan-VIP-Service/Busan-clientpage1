@@ -433,17 +433,11 @@
                 return;
             }
 
-            const webAppUrl = 'https://script.google.com/macros/s/AKfycbxP0c9yBakkaP2l8gAjWcPu2qCUJ-m_nvNtGtFxSgy19tWrbRzBD6Wjc1fE_tfHdQRDvg/exec';
+            const webAppUrl = 'http://127.0.0.1:5000/submit';
 
             if (navigator.vibrate) {
                 navigator.vibrate(50);
             }
-
-            // CORS 차단을 우회하기 위해 숨겨진 폼을 동적으로 생성해서 전송
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = webAppUrl;
-            form.target = '_blank'; // 새 창이나 백그라운드로 처리 (원하면 안 보이게 iframe 사용 가능)
 
             const formData = {
                 name: nameVal,
@@ -455,19 +449,28 @@
                 contact: contactVal
             };
 
-            for (const key in formData) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = formData[key];
-                form.appendChild(input);
+            try {
+                // fetch를 사용해 새 탭 열림 없이 백그라운드로 전송 (Flask 서버에 이미 CORS가 뚫려있으므로 완벽 작동)
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert("Request received. Our concierge will contact you shortly.");
+                    // 필요시 입력폼 초기화 등 추가 가능
+                } else {
+                    alert("Submission failed. Please try again.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Network error. Please check if the local server is running.");
             }
-
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-
-            alert("Request received. Our concierge will contact you shortly.");
         }
     </script>
 </body>

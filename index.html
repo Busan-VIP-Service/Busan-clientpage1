@@ -411,41 +411,27 @@
             const budgetChecked = document.querySelector('input[name="budget"]:checked');
             const guideChecked = document.querySelector('input[name="guideType"]:checked');
 
-            // 1. 필수 입력 누락 체크
             if (!nameVal || !hotelVal || !contactVal || !partySizeChecked || !vibeChecked || !budgetChecked || !guideChecked) {
                 alert("Please fill in all required fields and select all options.");
                 return;
             }
 
-            // 2. 호텔명 길이 및 상세 검증 (예: 너무 터무니없이 짧은 경우)
             if (hotelVal.length < 2) {
                 alert("Please enter the exact hotel name (e.g., Signiel Busan).");
                 document.getElementById('hotelInput').focus();
                 return;
             }
 
-            // 3. 연락처 형식 검증 (최소 5자리 이상, 전화번호나 ID 형태)
             if (contactVal.length < 5) {
                 alert("Please enter a valid phone number, WhatsApp, or ID for contact.");
                 document.getElementById('contactInput').focus();
                 return;
             }
 
-            // 4. 최종 확인 창(Confirmation) 추가 (선택사항이지만 강력 추천)
             const isConfirmed = confirm(`Please review your details:\n\n- Name: ${nameVal}\n- Hotel: ${hotelVal}\n- Contact: ${contactVal}\n\nIs this information correct?`);
             if (!isConfirmed) {
-                return; // 사용자가 '취소'를 누르면 제출 중단
+                return;
             }
-
-            const formData = {
-                name: nameVal,
-                partySize: partySizeChecked.value,
-                vibe: vibeChecked.value,
-                budget: budgetChecked.value,
-                guideType: guideChecked.value,
-                hotel: hotelVal,
-                contact: contactVal
-            };
 
             const webAppUrl = 'https://script.google.com/macros/s/AKfycbxP0c9yBakkaP2l8gAjWcPu2qCUJ-m_nvNtGtFxSgy19tWrbRzBD6Wjc1fE_tfHdQRDvg/exec';
 
@@ -454,16 +440,26 @@
                 return;
             }
 
+            // 데이터를 URL 파라미터 형태로 변환
+            const params = new URLSearchParams({
+                name: nameVal,
+                partySize: partySizeChecked.value,
+                vibe: vibeChecked.value,
+                budget: budgetChecked.value,
+                guideType: guideChecked.value,
+                hotel: hotelVal,
+                contact: contactVal
+            });
+
             if (navigator.vibrate) {
                 navigator.vibrate(50);
             }
 
             try {
-                let response = await fetch(webAppUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
+                // GET 방식으로 파라미터를 붙여서 전송 (CORS 우회)
+                await fetch(`${webAppUrl}?${params.toString()}`, {
+                    method: 'GET',
+                    mode: 'no-cors'
                 });
 
                 alert("Request received. Our concierge will contact you shortly.");

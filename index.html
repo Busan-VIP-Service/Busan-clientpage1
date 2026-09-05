@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busan Private Concierge</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px 0;
+            background-color: #0b0b0b;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: #161616;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 1px solid #222;
+        }
+        .image-container {
+            width: 100%;
+            height: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+        .slides {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease-in-out;
+        }
+        .slides img {
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        .image-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to top, #161616, transparent);
+            pointer-events: none;
+        }
+        .dots {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .dot.active {
+            background: #d4af37;
+        }
+        .content {
+            padding: 20px 25px 30px 25px;
+        }
+        h2 {
+            margin: 0 0 5px 0;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+            color: #f3f3f3;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        label.section-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 8px;
+            margin-top: 15px;
+        }
+        .options-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+        .option-item {
+            flex: 1;
+            min-width: 50px;
+        }
+        .option-item input[type="radio"] {
+            display: none;
+        }
+        .option-item label {
+            display: block;
+            padding: 10px 8px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 13px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: none;
+            margin: 0;
+        }
+        .option-item input[type="radio"]:checked + label {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #d4af37;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        .options-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        .option-vertical-item input[type="radio"] {
+            display: none;
+        }
+        .option-vertical-item label {
+            display: block;
+            padding: 11px 14px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: none;
+            margin: 0;
+        }
+        .option-vertical-item input[type="radio"]:checked + label {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #d4af37;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
+        button {
+            width: 100%;
+            background: #d4af37;
+            color: #000;
+            border: none;
+            padding: 14px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        button:active {
+            background: #b8972e;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="image-container" id="sliderContainer">
+            <div class="slides" id="slidesTrack">
+                <img src="model1.jpg" alt="Concierge Preview 1">
+                <img src="model2.jpg" alt="Concierge Preview 2">
+                <img src="model3.png" alt="Concierge Preview 3">
+                <img src="model4.png" alt="Concierge Preview 4">
+            </div>
+            <div class="dots" id="dotsContainer">
+                <span class="dot active" onclick="currentSlide(0)"></span>
+                <span class="dot" onclick="currentSlide(1)"></span>
+                <span class="dot" onclick="currentSlide(2)"></span>
+                <span class="dot" onclick="currentSlide(3)"></span>
+            </div>
+        </div>
+        <div class="content">
+            <h2>Busan Nightlife</h2>
+            <div class="subtitle">Exclusive VIP Curation</div>
+
+            <label class="section-label">Your Name</label>
+            <input type="text" id="nameInput" placeholder="Enter your name">
+
+            <label class="section-label">Party Size</label>
+            <div class="options-group">
+                <div class="option-item">
+                    <input type="radio" id="p1" name="partySize" value="1">
+                    <label for="p1">1</label>
+                </div>
+                <div class="option-item">
+                    <input type="radio" id="p2" name="partySize" value="2">
+                    <label for="p2">2</label>
+                </div>
+                <div class="option-item">
+                    <input type="radio" id="p3" name="partySize" value="3">
+                    <label for="p3">3</label>
+                </div>
+                <div class="option-item">
+                    <input type="radio" id="p4" name="partySize" value="4">
+                    <label for="p4">4</label>
+                </div>
+                <div class="option-item" style="flex: 1.5;">
+                    <input type="radio" id="p5" name="partySize" value="More than 4">
+                    <label for="p5">5+</label>
+                </div>
+            </div>
+
+            <label class="section-label">Preferred Vibe</label>
+            <div class="options-vertical">
+                <div class="option-vertical-item">
+                    <input type="radio" id="v1" name="vibe" value="Casual Bar">
+                    <label for="v1">Casual Lounge & Bar</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="v2" name="vibe" value="Dynamic Night">
+                    <label for="v2">Dynamic & Private Room</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="v3" name="vibe" value="Ultimate VIP">
+                    <label for="v3">Ultimate VIP Experience</label>
+                </div>
+            </div>
+
+            <label class="section-label">Estimated Budget (USD)</label>
+            <div class="options-vertical">
+                <div class="option-vertical-item">
+                    <input type="radio" id="b1" name="budget" value="500 - 1000">
+                    <label for="b1">$500 - $1,000</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="b2" name="budget" value="1000 - 2000">
+                    <label for="b2">$1,000 - $2,000</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="b3" name="budget" value="2000 - 3000">
+                    <label for="b3">$2,000 - $3,000</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="b4" name="budget" value="No limit">
+                    <label for="b4">No Limit / Unlimited VIP</label>
+                </div>
+            </div>
+
+            <label class="section-label">Preferred Guide / Interpreter Type</label>
+            <div class="options-vertical">
+                <div class="option-vertical-item">
+                    <input type="radio" id="guide_pro" name="guideType" value="Professional Interpreter">
+                    <label for="guide_pro">Professional Business Interpreter (English Fluent)</label>
+                </div>
+                <div class="option-vertical-item">
+                    <input type="radio" id="guide_basic" name="guideType" value="Basic Guide">
+                    <label for="guide_basic">Basic Guide (English Not Available / Standard)</label>
+                </div>
+            </div>
+
+            <label class="section-label">Hotel Name (Exact Name Required)</label>
+            <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
+
+            <label class="section-label">Contact (Exact Phone / WhatsApp / ID)</label>
+            <input type="text" id="contactInput" placeholder="Enter exact contact info...">
+
+            <button onclick="submitData()">Request Access</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'U')
+            ) {
+                e.preventDefault();
+            }
+        });
+
+        let currentIndex = 0;
+        const track = document.getElementById('slidesTrack');
+        const slides = track.getElementsByTagName('img');
+        const totalSlides = slides.length;
+        const dots = document.getElementsByClassName('dot');
+        let autoSlideTimer;
+
+        function updateSlidePosition() {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].classList.remove('active');
+            }
+            dots[currentIndex].classList.add('active');
+        }
+
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % totalSlides;
+            updateSlidePosition();
+        }
+
+        function currentSlide(index) {
+            currentIndex = index;
+            updateSlidePosition();
+            resetAutoSlide();
+        }
+
+        function resetAutoSlide() {
+            clearInterval(autoSlideTimer);
+            autoSlideTimer = setInterval(nextSlide, 3500);
+        }
+
+        autoSlideTimer = setInterval(nextSlide, 3500);
+
+        let startX = 0;
+        let isDragging = false;
+
+        track.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+            clearInterval(autoSlideTimer);
+        });
+
+        track.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+        });
+
+        track.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+
+            if (diff > 50) {
+                currentIndex = (currentIndex + 1) % totalSlides;
+            } else if (diff < -50) {
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            }
+            updateSlidePosition();
+            isDragging = false;
+            resetAutoSlide();
+        });
+
+        track.addEventListener('mousedown', (e) => {
+            startX = e.clientX;
+            isDragging = true;
+            clearInterval(autoSlideTimer);
+        });
+
+        track.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            const endX = e.clientX;
+            const diff = startX - endX;
+
+            if (diff > 50) {
+                currentIndex = (currentIndex + 1) % totalSlides;
+            } else if (diff < -50) {
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            }
+            updateSlidePosition();
+            isDragging = false;
+            resetAutoSlide();
+        });
+
+        async function submitData() {
+            const nameVal = document.getElementById('nameInput').value.trim();
+            const hotelVal = document.getElementById('hotelInput').value.trim();
+            const contactVal = document.getElementById('contactInput').value.trim();
+
+            const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
+            const vibeChecked = document.querySelector('input[name="vibe"]:checked');
+            const budgetChecked = document.querySelector('input[name="budget"]:checked');
+            const guideChecked = document.querySelector('input[name="guideType"]:checked');
+
+            // 1. 필수 입력 누락 체크
+            if (!nameVal || !hotelVal || !contactVal || !partySizeChecked || !vibeChecked || !budgetChecked || !guideChecked) {
+                alert("Please fill in all required fields and select all options.");
+                return;
+            }
+
+            // 2. 호텔명 길이 및 상세 검증 (예: 너무 터무니없이 짧은 경우)
+            if (hotelVal.length < 2) {
+                alert("Please enter the exact hotel name (e.g., Signiel Busan).");
+                document.getElementById('hotelInput').focus();
+                return;
+            }
+
+            // 3. 연락처 형식 검증 (최소 5자리 이상, 전화번호나 ID 형태)
+            if (contactVal.length < 5) {
+                alert("Please enter a valid phone number, WhatsApp, or ID for contact.");
+                document.getElementById('contactInput').focus();
+                return;
+            }
+
+            // 4. 최종 확인 창(Confirmation) 추가 (선택사항이지만 강력 추천)
+            const isConfirmed = confirm(`Please review your details:\n\n- Name: ${nameVal}\n- Hotel: ${hotelVal}\n- Contact: ${contactVal}\n\nIs this information correct?`);
+            if (!isConfirmed) {
+                return; // 사용자가 '취소'를 누르면 제출 중단
+            }
+
+            const formData = {
+                name: nameVal,
+                partySize: partySizeChecked.value,
+                vibe: vibeChecked.value,
+                budget: budgetChecked.value,
+                guideType: guideChecked.value,
+                hotel: hotelVal,
+                contact: contactVal
+            };
+
+            const webAppUrl = 'https://script.google.com/macros/s/AKfycbxP0c9yBakkaP2l8gAjWcPu2qCUJ-m_nvNtGtFxSgy19tWrbRzBD6Wjc1fE_tfHdQRDvg/exec';
+
+            if(webAppUrl.includes('AKfycbx...')) {
+                alert("Please insert your Google Web App URL first!");
+                return;
+            }
+
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            try {
+                let response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                alert("Request received. Our concierge will contact you shortly.");
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Submission failed. Please check console.");
+            }
+        }
+    </script>
+</body>
+</html>

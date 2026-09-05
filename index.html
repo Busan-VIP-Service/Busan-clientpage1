@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -127,7 +127,6 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            text-transform: none;
             margin: 0;
         }
         .option-item input[type="radio"]:checked + label {
@@ -155,7 +154,6 @@
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s;
-            text-transform: none;
             margin: 0;
         }
         .option-vertical-item input[type="radio"]:checked + label {
@@ -164,7 +162,7 @@
             color: #d4af37;
             font-weight: bold;
         }
-        input[type="text"] {
+        input[type="text"], input[type="date"], select {
             width: 100%;
             padding: 12px;
             margin-top: 5px;
@@ -175,10 +173,23 @@
             color: #fff;
             font-size: 14px;
             box-sizing: border-box;
-        }
-        input[type="text"]:focus {
             outline: none;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
             border-color: #d4af37;
+        }
+        select {
+            cursor: pointer;
+        }
+        .contact-group {
+            display: flex;
+            gap: 8px;
+        }
+        .contact-group select {
+            flex: 1.2;
+        }
+        .contact-group input {
+            flex: 2.8;
         }
         button {
             width: 100%;
@@ -196,11 +207,75 @@
         button:active {
             background: #b8972e;
         }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0);
+        }
+        .modal-title {
+            font-size: 18px;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .modal-desc {
+            font-size: 14px;
+            color: #bbb;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .modal-btn {
+            background: #d4af37;
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+        }
+        .success-container {
+            text-align: center;
+            padding: 30px 10px;
+        }
+        .success-icon {
+            font-size: 42px;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
+    <div class="card" id="mainCard">
         <div class="image-container" id="sliderContainer">
             <div class="slides" id="slidesTrack">
                 <img src="model1.jpg" alt="Concierge Preview 1">
@@ -215,265 +290,178 @@
                 <span class="dot" onclick="currentSlide(3)"></span>
             </div>
         </div>
-        <div class="content">
+        <div class="content" id="formContent">
             <h2>Busan Nightlife</h2>
             <div class="subtitle">Exclusive VIP Curation</div>
 
             <label class="section-label">Your Name</label>
             <input type="text" id="nameInput" placeholder="Enter your name">
 
+            <label class="section-label">Visit Date (Schedule)</label>
+            <input type="date" id="dateInput">
+
             <label class="section-label">Party Size</label>
             <div class="options-group">
-                <div class="option-item">
-                    <input type="radio" id="p1" name="partySize" value="1">
-                    <label for="p1">1</label>
-                </div>
-                <div class="option-item">
-                    <input type="radio" id="p2" name="partySize" value="2">
-                    <label for="p2">2</label>
-                </div>
-                <div class="option-item">
-                    <input type="radio" id="p3" name="partySize" value="3">
-                    <label for="p3">3</label>
-                </div>
-                <div class="option-item">
-                    <input type="radio" id="p4" name="partySize" value="4">
-                    <label for="p4">4</label>
-                </div>
-                <div class="option-item" style="flex: 1.5;">
-                    <input type="radio" id="p5" name="partySize" value="More than 4">
-                    <label for="p5">5+</label>
-                </div>
+                <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
+                <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
+                <div class="option-item"><input type="radio" id="p3" name="partySize" value="3"><label for="p3">3</label></div>
+                <div class="option-item"><input type="radio" id="p4" name="partySize" value="4"><label for="p4">4</label></div>
+                <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="More than 4"><label for="p5">5+</label></div>
             </div>
 
             <label class="section-label">Preferred Vibe</label>
             <div class="options-vertical">
-                <div class="option-vertical-item">
-                    <input type="radio" id="v1" name="vibe" value="Casual Bar">
-                    <label for="v1">Casual Lounge & Bar</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="v2" name="vibe" value="Dynamic Night">
-                    <label for="v2">Dynamic & Private Room</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="v3" name="vibe" value="Ultimate VIP">
-                    <label for="v3">Ultimate VIP Experience</label>
-                </div>
+                <div class="option-vertical-item"><input type="radio" id="v1" name="vibe" value="Casual Bar"><label for="v1">Casual Lounge & Bar</label></div>
+                <div class="option-vertical-item"><input type="radio" id="v2" name="vibe" value="Dynamic Night"><label for="v2">Dynamic & Private Room</label></div>
+                <div class="option-vertical-item"><input type="radio" id="v3" name="vibe" value="Ultimate VIP"><label for="v3">Ultimate VIP Experience</label></div>
             </div>
 
             <label class="section-label">Estimated Budget (USD)</label>
             <div class="options-vertical">
-                <div class="option-vertical-item">
-                    <input type="radio" id="b1" name="budget" value="500 - 1000">
-                    <label for="b1">$500 - $1,000</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="b2" name="budget" value="1000 - 2000">
-                    <label for="b2">$1,000 - $2,000</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="b3" name="budget" value="2000 - 3000">
-                    <label for="b3">$2,000 - $3,000</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="b4" name="budget" value="No limit">
-                    <label for="b4">No Limit / Unlimited VIP</label>
-                </div>
+                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="500 - 1000"><label for="b1">$500 - $1,000</label></div>
+                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="1000 - 2000"><label for="b2">$1,000 - $2,000</label></div>
+                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="2000 - 3000"><label for="b3">$2,000 - $3,000</label></div>
+                <div class="option-vertical-item"><input type="radio" id="b4" name="budget" value="No limit"><label for="b4">No Limit / Unlimited VIP</label></div>
             </div>
 
             <label class="section-label">Preferred Guide / Interpreter Type</label>
             <div class="options-vertical">
-                <div class="option-vertical-item">
-                    <input type="radio" id="guide_pro" name="guideType" value="Professional Interpreter">
-                    <label for="guide_pro">Professional Business Interpreter (English Fluent)</label>
-                </div>
-                <div class="option-vertical-item">
-                    <input type="radio" id="guide_basic" name="guideType" value="Basic Guide">
-                    <label for="guide_basic">Basic Guide (English Not Available / Standard)</label>
-                </div>
+                <div class="option-vertical-item"><input type="radio" id="guide_pro" name="guideType" value="Professional Interpreter"><label for="guide_pro">Professional Business Interpreter (English Fluent)</label></div>
+                <div class="option-vertical-item"><input type="radio" id="guide_basic" name="guideType" value="Basic Guide"><label for="guide_basic">Basic Guide (English Not Available / Standard)</label></div>
             </div>
 
             <label class="section-label">Hotel Name (Exact Name Required)</label>
             <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
 
-            <label class="section-label">Contact (Exact Phone / WhatsApp / ID)</label>
-            <input type="text" id="contactInput" placeholder="Enter exact contact info...">
+            <label class="section-label">Contact (Country Code & Number / ID)</label>
+            <div class="contact-group">
+                <select id="countryCode">
+                    <option value="+1" selected>🇺🇸 +1 (USA / Canada)</option>
+                    <option value="+61">🇦🇺 +61 (Australia)</option>
+                    <option value="+62">🇮🇩 +62 (Indonesia)</option>
+                    <option value="+60">🇲🇾 +60 (Malaysia)</option>
+                    <option value="+91">🇮🇳 +91 (India)</option>
+                    <option value="+63">🇵🇭 +63 (Philippines)</option>
+                    <option value="+86">🇨🇳 +86 (China)</option>
+                    <option value="+81">🇯🇵 +81 (Japan)</option>
+                    <option value="+65">🇸🇬 +65 (Singapore)</option>
+                    <option value="+852">🇭🇰 +852 (Hong Kong)</option>
+                    <option value="+886">🇹🇼 +886 (Taiwan)</option>
+                    <option value="+66">🇹🇭 +66 (Thailand)</option>
+                    <option value="+84">🇻🇳 +84 (Vietnam)</option>
+                    <option value="+44">🇬🇧 +44 (United Kingdom)</option>
+                    <option value="+33">🇫🇷 +33 (France)</option>
+                    <option value="+49">🇩🇪 +49 (Germany)</option>
+                    <option value="+41">🇨🇭 +41 (Switzerland)</option>
+                    <option value="+7">🇷🇺 +7 (Russia)</option>
+                    <option value="+48">🇵🇱 +48 (Poland)</option>
+                    <option value="+420">🇨🇿 +420 (Czech Republic)</option>
+                    <option value="+971">🇦🇪 +971 (UAE / Dubai)</option>
+                    <option value="+55">🇧🇷 +55 (Brazil)</option>
+                    <option value="+52">🇲🇽 +52 (Mexico)</option>
+                    <option value="+OTHER">🌐 Other / Messenger ID</option>
+                </select>
+                <input type="text" id="contactInput" placeholder="Phone or WhatsApp ID">
+            </div>
 
-            <button onclick="submitData()">Request Access</button>
+            <button onclick="openConfirmModal()">Request Access</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <div class="modal-title">Confirm Request</div>
+            <div class="modal-desc" id="confirmText">Are you ready to submit your VIP concierge curation request?</div>
+            <button class="modal-btn" onclick="submitData()">Confirm & Send</button>
         </div>
     </div>
 
     <script>
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (
-                e.key === 'F12' ||
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-                (e.ctrlKey && e.key === 'U')
-            ) {
-                e.preventDefault();
-            }
-        });
-
         let currentIndex = 0;
         const track = document.getElementById('slidesTrack');
         const slides = track.getElementsByTagName('img');
         const totalSlides = slides.length;
         const dots = document.getElementsByClassName('dot');
-        let autoSlideTimer;
+        let autoSlideTimer = setInterval(nextSlide, 3500);
 
         function updateSlidePosition() {
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            for (let i = 0; i < dots.length; i++) {
-                dots[i].classList.remove('active');
-            }
+            for (let i = 0; i < dots.length; i++) dots[i].classList.remove('active');
             dots[currentIndex].classList.add('active');
         }
+        function nextSlide() { currentIndex = (currentIndex + 1) % totalSlides; updateSlidePosition(); }
+        function currentSlide(index) { currentIndex = index; updateSlidePosition(); clearInterval(autoSlideTimer); autoSlideTimer = setInterval(nextSlide, 3500); }
 
-        function nextSlide() {
-            currentIndex = (currentIndex + 1) % totalSlides;
-            updateSlidePosition();
-        }
-
-        function currentSlide(index) {
-            currentIndex = index;
-            updateSlidePosition();
-            resetAutoSlide();
-        }
-
-        function resetAutoSlide() {
-            clearInterval(autoSlideTimer);
-            autoSlideTimer = setInterval(nextSlide, 3500);
-        }
-
-        autoSlideTimer = setInterval(nextSlide, 3500);
-
-        let startX = 0;
-        let isDragging = false;
-
-        track.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            isDragging = true;
-            clearInterval(autoSlideTimer);
-        });
-
-        track.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-        });
-
-        track.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            const endX = e.changedTouches[0].clientX;
-            const diff = startX - endX;
-
-            if (diff > 50) {
-                currentIndex = (currentIndex + 1) % totalSlides;
-            } else if (diff < -50) {
-                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-            }
-            updateSlidePosition();
-            isDragging = false;
-            resetAutoSlide();
-        });
-
-        track.addEventListener('mousedown', (e) => {
-            startX = e.clientX;
-            isDragging = true;
-            clearInterval(autoSlideTimer);
-        });
-
-        track.addEventListener('mouseup', (e) => {
-            if (!isDragging) return;
-            const endX = e.clientX;
-            const diff = startX - endX;
-
-            if (diff > 50) {
-                currentIndex = (currentIndex + 1) % totalSlides;
-            } else if (diff < -50) {
-                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-            }
-            updateSlidePosition();
-            isDragging = false;
-            resetAutoSlide();
-        });
-
-        async function submitData() {
+        function openConfirmModal() {
             const nameVal = document.getElementById('nameInput').value.trim();
+            const dateVal = document.getElementById('dateInput').value;
             const hotelVal = document.getElementById('hotelInput').value.trim();
             const contactVal = document.getElementById('contactInput').value.trim();
-
+            
             const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
             const vibeChecked = document.querySelector('input[name="vibe"]:checked');
             const budgetChecked = document.querySelector('input[name="budget"]:checked');
             const guideChecked = document.querySelector('input[name="guideType"]:checked');
 
-            if (!nameVal || !hotelVal || !contactVal || !partySizeChecked || !vibeChecked || !budgetChecked || !guideChecked) {
-                alert("Please fill in all required fields and select all options.");
+            if (!nameVal || !dateVal || !hotelVal || !contactVal || !partySizeChecked || !vibeChecked || !budgetChecked || !guideChecked) {
+                alert("Please fill in all required fields, select schedule, and options.");
                 return;
             }
 
-            if (hotelVal.length < 2) {
-                alert("Please enter the exact hotel name (e.g., Signiel Busan).");
-                document.getElementById('hotelInput').focus();
-                return;
-            }
+            document.getElementById('confirmText').innerHTML = `<b>${nameVal}</b>,<br>Date: <b>${dateVal}</b><br>Hotel: <b>${hotelVal}</b><br>Proceed with request?`;
+            document.getElementById('confirmModal').classList.add('active');
+        }
 
-            if (contactVal.length < 5) {
-                alert("Please enter a valid phone number, WhatsApp, or ID for contact.");
-                document.getElementById('contactInput').focus();
-                return;
-            }
+        async function submitData() {
+            document.getElementById('confirmModal').classList.remove('active');
 
-            const isConfirmed = confirm(`Please review your details:\n\n- Name: ${nameVal}\n- Hotel: ${hotelVal}\n- Contact: ${contactVal}\n\nIs this information correct?`);
-            if (!isConfirmed) {
-                return;
-            }
+            const nameVal = document.getElementById('nameInput').value.trim();
+            const dateVal = document.getElementById('dateInput').value;
+            const countryCode = document.getElementById('countryCode').value;
+            const contactVal = document.getElementById('contactInput').value.trim();
+            const fullContact = `${countryCode} ${contactVal}`;
 
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
+            const hotelVal = document.getElementById('hotelInput').value.trim();
+            const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
+            const vibeChecked = document.querySelector('input[name="vibe"]:checked');
+            const budgetChecked = document.querySelector('input[name="budget"]:checked');
+            const guideChecked = document.querySelector('input[name="guideType"]:checked');
 
-            // 텔레그램 봇 정보 (본인의 토큰과 채널 ID 입력)
             const botToken = '8175244050:AAH2roCg92UBZfAv5eL4niMbM6LavE0VSoc';
             const chatId = '-1004353056100';
             const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-            // 텔레그램으로 보낼 메시지 포맷팅
             const message = 
-                `🚨 [새로운 VIP 예약 요청]\n\n` +
-                `- 이름: ${nameVal}\n` +
-                `- 인원: ${partySizeChecked.value}\n` +
-                `- 바이브: ${vibeChecked.value}\n` +
-                `- 예산: $${budgetChecked.value}\n` +
-                `- 가이드 유형: ${guideChecked.value}\n` +
-                `- 호텔: ${hotelVal}\n` +
-                `- 연락처: ${contactVal}`;
+                `🚨 [New VIP Reservation Request]\n\n` +
+                `- Name: ${nameVal}\n` +
+                `- Visit Date: ${dateVal}\n` +
+                `- Party Size: ${partySizeChecked.value}\n` +
+                `- Vibe: ${vibeChecked.value}\n` +
+                `- Budget: $${budgetChecked.value}\n` +
+                `- Guide Type: ${guideChecked.value}\n` +
+                `- Hotel: ${hotelVal}\n` +
+                `- Contact: ${fullContact}`;
 
             try {
-                // 백엔드 서버 없이 프론트엔드에서 텔레그램으로 다이렉트 전송
-                const response = await fetch(telegramUrl, {
+                await fetch(telegramUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: message })
                 });
 
-                const result = await response.json();
-
-                if (result.ok) {
-                    alert("Request received. Our concierge will contact you shortly.");
-                    // 필요시 폼 초기화 코드 추가 가능
-                } else {
-                    alert("Submission failed. Please try again.");
-                }
+                document.getElementById('formContent').innerHTML = `
+                    <div class="success-container">
+                        <div class="success-icon">✦</div>
+                        <h2>Request Received</h2>
+                        <div class="subtitle" style="margin-bottom: 15px;">Invoice & Curation Guideline</div>
+                        <p style="font-size: 13px; color: #ccc; line-height: 1.6; margin-bottom: 20px; text-align: left;">
+                            <b>[Next Steps]</b><br>
+                            1. Our concierge team is reviewing your schedule for <b>${dateVal}</b>.<br>
+                            2. We will shortly send your customized <b>course guide and invoice</b> to your contact (<b>${fullContact}</b>).
+                        </p>
+                        <button onclick="location.reload()">Back to Home</button>
+                    </div>
+                `;
             } catch (error) {
                 console.error('Error:', error);
                 alert("Network error. Please check your connection.");

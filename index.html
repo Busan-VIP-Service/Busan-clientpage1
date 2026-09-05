@@ -435,13 +435,17 @@
 
             const webAppUrl = 'https://script.google.com/macros/s/AKfycbxP0c9yBakkaP2l8gAjWcPu2qCUJ-m_nvNtGtFxSgy19tWrbRzBD6Wjc1fE_tfHdQRDvg/exec';
 
-            if(webAppUrl.includes('AKfycbx...')) {
-                alert("Please insert your Google Web App URL first!");
-                return;
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
             }
 
-            // 데이터를 URL 파라미터 형태로 변환
-            const params = new URLSearchParams({
+            // CORS 차단을 우회하기 위해 숨겨진 폼을 동적으로 생성해서 전송
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = webAppUrl;
+            form.target = '_blank'; // 새 창이나 백그라운드로 처리 (원하면 안 보이게 iframe 사용 가능)
+
+            const formData = {
                 name: nameVal,
                 partySize: partySizeChecked.value,
                 vibe: vibeChecked.value,
@@ -449,24 +453,21 @@
                 guideType: guideChecked.value,
                 hotel: hotelVal,
                 contact: contactVal
-            });
+            };
 
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
+            for (const key in formData) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = formData[key];
+                form.appendChild(input);
             }
 
-            try {
-                // GET 방식으로 파라미터를 붙여서 전송 (CORS 우회)
-                await fetch(`${webAppUrl}?${params.toString()}`, {
-                    method: 'GET',
-                    mode: 'no-cors'
-                });
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
 
-                alert("Request received. Our concierge will contact you shortly.");
-            } catch (error) {
-                console.error('Error:', error);
-                alert("Submission failed. Please check console.");
-            }
+            alert("Request received. Our concierge will contact you shortly.");
         }
     </script>
 </body>

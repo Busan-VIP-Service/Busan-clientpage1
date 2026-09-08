@@ -5,334 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busan Private Concierge</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #0b0b0b;
-            color: #ffffff;
+            margin: 0; padding: 0; background-color: #0b0b0b; color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            width: 100vw;
-            min-height: 100vh;
-            -webkit-user-select: none;
-            user-select: none;
+            width: 100vw; min-height: 100vh; -webkit-user-select: none; user-select: none;
         }
-
-        /* 기본 컨테이너 (세로 모드 기준: 위아래 배치) */
-        .wrapper {
-            width: 100vw;
-            min-height: 100vh;
-            background: #161616;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 슬라이더 구조 (공통) */
+        .wrapper { width: 100vw; min-height: 100vh; background: #161616; display: flex; flex-direction: column; }
         .slider-container {
-            width: 100%;
-            height: clamp(320px, 48svh, 560px); /* Room for uncropped photos and controls */
-            position: relative;
-            overflow: hidden;
-            flex-shrink: 0;
+            width: 100%; height: clamp(320px, 48svh, 560px); position: relative; overflow: hidden; flex-shrink: 0;
+            isolation: isolate; background: #101014; touch-action: pan-y;
         }
-        .slides {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.5s ease-in-out;
-        }
-        .slides img {
-            width: 100%;
-            flex: 0 0 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: center;
-            padding: 0;
-            pointer-events: none;
-        }
-
-        /* The foreground stays complete; only the decorative backdrop fills the frame. */
-        .slider-container { isolation: isolate; background: #101014; }
         .slider-container::before {
             content: ''; position: absolute; inset: -32px; z-index: -1;
-            background-image: var(--gallery-backdrop);
-            background-position: center; background-size: cover;
+            background-image: var(--gallery-backdrop); background-position: center; background-size: cover;
             filter: blur(24px) brightness(0.35); pointer-events: none;
         }
-        .slides { position: relative; }
-
-        /* 입력 폼 영역 */
-        .content {
-            padding: 24px;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        h2 {
-            margin: 0 0 4px 0;
-            font-size: 22px;
-            letter-spacing: 0.5px;
-            color: #f3f3f3;
-        }
-        .subtitle {
-            font-size: 12px;
-            color: #d4af37;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        label.section-label {
-            font-size: 11px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: block;
-            margin-bottom: 6px;
-            margin-top: 12px;
-        }
-        .optional-tag {
-            color: #555;
-            font-size: 10px;
-            font-weight: normal;
-            margin-left: 4px;
-        }
-        .options-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 5px;
-        }
-        .option-item {
-            flex: 1;
-            min-width: 45px;
-        }
-        .option-item input[type="radio"], .option-vertical-item input[type="radio"] {
-            display: none;
-        }
+        .slides { display: flex; width: 100%; height: 100%; transition: transform 0.5s ease-in-out; position: relative; }
+        .slides img { width: 100%; flex: 0 0 100%; height: 100%; object-fit: contain; object-position: center; padding: 0; pointer-events: none; }
+        .content { padding: 24px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        h2 { margin: 0 0 4px 0; font-size: 22px; letter-spacing: 0.5px; color: #f3f3f3; }
+        .subtitle { font-size: 12px; color: #d4af37; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        label.section-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; margin-top: 12px; }
+        .optional-tag { color: #555; font-size: 10px; font-weight: normal; margin-left: 4px; }
+        .options-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+        .option-item { flex: 1; min-width: 45px; }
+        .option-item input[type="radio"], .option-vertical-item input[type="radio"] { display: none; }
         .option-item label, .option-vertical-item label {
-            display: block;
-            padding: 9px 8px;
-            background: #222;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #ccc;
-            font-size: 13px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 0;
+            display: block; padding: 9px 8px; background: #222; border: 1px solid #333; border-radius: 8px;
+            color: #ccc; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; margin: 0;
         }
-        .option-item input[type="radio"]:checked + label,
-        .option-vertical-item input[type="radio"]:checked + label {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: #d4af37;
-            color: #d4af37;
-            font-weight: bold;
+        .option-item input[type="radio"]:checked + label, .option-vertical-item input[type="radio"]:checked + label {
+            background: rgba(212, 175, 55, 0.15); border-color: #d4af37; color: #d4af37; font-weight: bold;
         }
-        .options-vertical {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 5px;
-        }
-        .option-vertical-item label {
-            padding: 10px 14px;
-            text-align: left;
-        }
+        .options-vertical { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
+        .option-vertical-item label { padding: 10px 14px; text-align: left; }
         input[type="text"], input[type="date"], input[type="number"], select {
-            width: 100%;
-            padding: 11px 12px;
-            margin-top: 4px;
-            margin-bottom: 4px;
-            background: #222;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
+            width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
+            background: #222; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box; outline: none;
         }
-        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
-            border-color: #d4af37;
-        }
-        .contact-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-        .contact-group select {
-            flex: 1.2;
-        }
-        .contact-group input {
-            flex: 2.8;
-        }
-
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus { border-color: #d4af37; }
+        .contact-group { display: flex; gap: 8px; margin-bottom: 4px; }
+        .contact-group select { flex: 1.2; }
+        .contact-group input { flex: 2.8; }
         button.submit-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #e6c563 0%, #c59b27 100%);
-            color: #000;
-            border: none;
-            padding: 14px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: opacity 0.2s;
-            margin-top: 20px;
-            margin-bottom: 20px;
+            width: 100%; background: linear-gradient(135deg, #e6c563 0%, #c59b27 100%); color: #000;
+            border: none; padding: 14px; font-weight: bold; font-size: 15px; cursor: pointer; border-radius: 8px;
+            transition: opacity 0.2s; margin-top: 20px; margin-bottom: 20px;
         }
-        button.submit-btn:active {
-            opacity: 0.8;
-        }
-
+        button.submit-btn:active { opacity: 0.8; }
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-box {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 30px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        }
-        .modal-title {
-            font-size: 18px;
-            color: #d4af37;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .modal-desc {
-            font-size: 14px;
-            color: #bbb;
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-        .modal-btn {
-            background: #d4af37;
-            color: #000;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            width: 100%;
-            cursor: pointer;
-        }
-        .required-star {
-            color: #ff4d4d;
-            font-weight: bold;
-        }
-
-        /* 반응형 분기: PC 또는 가로모드 */
-        @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
-            body {
-                overflow: hidden;
-            }
-            .wrapper {
-                flex-direction: row;
-                height: 100vh;
-            }
-            .slider-container {
-                width: 55%;
-                height: 100vh;
-            }
-            .content {
-                width: 45%;
-                height: 100vh;
-                padding: 40px;
-            }
-            /* PC 화면에서는 mobile_main 슬라이드를 숨기고 main 슬라이드를 보여줌 */
-            .mobile-only-slide {
-                display: none !important;
-            }
-            .pc-only-slide {
-                display: block !important;
-            }
-        }
-
-        /* 모바일 화면 분기 */
-        @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
-            /* 모바일 화면에서는 main 슬라이드를 숨기고 mobile_main 슬라이드를 보여줌 */
-            .mobile-only-slide {
-                display: block !important;
-            }
-            .pc-only-slide {
-                display: none !important;
-            }
-        }
-
-        .slider-container { touch-action: pan-y; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; padding: 30px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .modal-title { font-size: 18px; color: #d4af37; font-weight: bold; margin-bottom: 10px; }
+        .modal-desc { font-size: 14px; color: #bbb; margin-bottom: 25px; line-height: 1.5; }
+        .modal-btn { background: #d4af37; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
+        .required-star { color: #ff4d4d; font-weight: bold; }
         .slider-arrow {
-            position: absolute; z-index: 11; border: 1px solid #ffffff66;
-            background: #0009; color: white; cursor: pointer; border-radius: 24px;
-            min-width: 44px; min-height: 44px;
+            position: absolute; z-index: 11; border: 1px solid #ffffff66; background: #0009; color: white; cursor: pointer; border-radius: 24px;
+            min-width: 44px; min-height: 44px; top: 50%; transform: translateY(-50%); font-size: 28px;
         }
-        .slider-arrow { top: 50%; transform: translateY(-50%); font-size: 28px; }
         .slider-prev { left: 12px; } .slider-next { right: 12px; }
-        .slider-container button:focus-visible { outline: 3px solid #d4af37; outline-offset: 2px; }
-        @media (prefers-reduced-motion: reduce) { .slides { transition: none; } }
-        .slides > picture, .slides > img { display: block; flex: 0 0 100%; width: 100%; min-width: 0; height: 100%; }
-        .slides > picture img { display: block; width: 100%; height: 100%; object-fit: contain; }
+        @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
+            body { overflow: hidden; }
+            .wrapper { flex-direction: row; height: 100vh; }
+            .slider-container { width: 55%; height: 100vh; }
+            .content { width: 45%; height: 100vh; padding: 40px; }
+            .mobile-only-slide { display: none !important; }
+            .pc-only-slide { display: block !important; }
+        }
+        @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
+            .mobile-only-slide { display: block !important; }
+            .pc-only-slide { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
     <div class="wrapper">
-        <!-- 슬라이더 영역 -->
         <div class="slider-container" id="sliderContainer" role="region" aria-label="Busan photo gallery" aria-roledescription="carousel" tabindex="0">
             <div class="slides" id="slidesTrack">
-                <!-- 모바일 전용 첫 번째 슬라이드 (mobile_main.png) -->
                 <img src="mobile_main.png" class="mobile-only-slide" alt="Busan Private Concierge Mobile" draggable="false" decoding="async" fetchpriority="high">
-                
-                <!-- PC/가로모드 전용 첫 번째 슬라이드 (main.png) -->
                 <img src="main.png" class="pc-only-slide" alt="Busan Private Concierge PC" draggable="false" decoding="async" fetchpriority="high" style="display:none;">
-
-                <img src="image1 (1).png" alt="Busan concierge gallery photo 2" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (2).png" alt="Busan concierge gallery photo 3" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (3).png" alt="Busan concierge gallery photo 4" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (4).png" alt="Busan concierge gallery photo 5" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (5).png" alt="Busan concierge gallery photo 6" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (6).png" alt="Busan concierge gallery photo 7" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (7).png" alt="Busan concierge gallery photo 8" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (8).png" alt="Busan concierge gallery photo 9" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (9).png" alt="Busan concierge gallery photo 10" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (10).png" alt="Busan concierge gallery photo 11" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (11).png" alt="Busan concierge gallery photo 12" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (12).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (13).png" alt="Busan concierge gallery photo 14" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (14).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (1).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (2).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (3).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
             </div>
             <button class="slider-arrow slider-prev" id="prevSlide" type="button" aria-label="Previous photo">&#8249;</button>
             <button class="slider-arrow slider-next" id="nextSlide" type="button" aria-label="Next photo">&#8250;</button>
         </div>
 
-        <!-- 예약 입력 폼 영역 -->
         <div class="content" id="formContent">
             <h2>Plan Your Night</h2>
             <div class="subtitle">Exclusive VIP Package</div>
-            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
-                <span class="required-star">*</span> Required fields
-            </p>
+            <p style="font-size: 12px; color: #888; margin-bottom: 10px;"><span class="required-star">*</span> Required fields</p>
 
             <label class="section-label">Your Name <span class="required-star">*</span></label>
             <input type="text" id="nameInput" placeholder="Enter your name">
@@ -381,7 +151,8 @@
             <label class="section-label">Hotel Name <span class="required-star">*</span></label>
             <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
 
-            <label class="section-label">Contact <span class="required-star">*</span></label>
+            <!-- 인증 없이 바로 입력받는 왓츠앱 / 연락처 입력창 -->
+            <label class="section-label">WhatsApp / Contact Number <span class="required-star">*</span></label>
             <div class="contact-group">
                 <select id="countryCode">
                     <option value="+1">🇺🇸 +1</option>
@@ -392,9 +163,8 @@
                     <option value="+44">🇬🇧 +44</option>
                     <option value="+OTHER">🌐 Other</option>
                 </select>
-                <input type="text" id="contactInput" placeholder="Phone Number">
+                <input type="text" id="contactInput" placeholder="Phone Number (e.g. 01012345678)">
             </div>
-            <p style="font-size:12px;color:#888">Preview only. SMS verification and delivery are not connected yet.</p>
 
             <button class="submit-btn" onclick="openConfirmModal()">Request Access</button>
         </div>
@@ -414,7 +184,6 @@
         const track = document.getElementById('slidesTrack');
         const gallery = document.getElementById('sliderContainer');
         
-        // 화면 크기에 따라 현재 보이는 이미지들만 추려냄
         function getVisiblePhotos() {
             return Array.from(track.querySelectorAll('img')).filter(img => window.getComputedStyle(img).display !== 'none');
         }
@@ -425,103 +194,37 @@
         window.addEventListener('resize', () => {
             photos = getVisiblePhotos();
             totalSlides = photos.length;
-            if (currentIndex >= totalSlides) {
-                currentIndex = 0;
-            }
+            if (currentIndex >= totalSlides) currentIndex = 0;
             updateSlidePosition();
         });
 
-        photos.forEach(photo => photo.addEventListener('load', () => {
-            if (photo === photos[currentIndex]) updateSlidePosition();
-        }));
-
-        let paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         let autoSlideTimer;
-
         function updateSlidePosition(withTransition = true) {
             photos = getVisiblePhotos();
             totalSlides = photos.length;
             if (totalSlides === 0) return;
             currentIndex = Math.min(currentIndex, totalSlides - 1);
-
             const activePhoto = photos[currentIndex];
             gallery.style.setProperty('--gallery-backdrop', `url("${activePhoto.currentSrc || activePhoto.src}")`);
-            
-            if (withTransition) {
-                track.style.transition = 'transform 0.5s ease-in-out';
-            } else {
-                track.style.transition = 'none'; // 순간 이동할 때는 애니메이션 끄기
-            }
-            
+            track.style.transition = withTransition ? 'transform 0.5s ease-in-out' : 'none';
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            
-            track.querySelectorAll('img').forEach((photo) => {
-                const isVisible = window.getComputedStyle(photo).display !== 'none';
-                photo.setAttribute('aria-hidden', String(!isVisible || photo !== activePhoto));
-            });
         }
 
-        function nextSlide() {
-            photos = getVisiblePhotos();
-            totalSlides = photos.length;
-            if (totalSlides === 0) return;
-
-            currentIndex++;
-            
-            // 마지막 사진을 지나서 다시 처음으로 가야 할 때!
-            if (currentIndex >= totalSlides) {
-                currentIndex = 0;
-                // 애니메이션을 끈 채로 0번(1번 사진) 위치로 순간 이동시킨 다음
-                updateSlidePosition(false);
-                // 브라우저가 강제로 리렌더링할 수 있도록 찰나의 틈을 줌
-                setTimeout(() => {
-                    track.style.transition = 'transform 0.5s ease-in-out';
-                }, 50);
-                return;
-            }
-            updateSlidePosition(true);
-        }
-
-        function currentSlide(index) {
-            photos = getVisiblePhotos();
-            totalSlides = photos.length;
-            if (totalSlides === 0) return;
-            currentIndex = ((index % totalSlides) + totalSlides) % totalSlides;
-            updateSlidePosition();
-            restartAutoSlide();
-        }
-        document.getElementById('prevSlide').addEventListener('click', () => currentSlide(currentIndex - 1));
-        document.getElementById('nextSlide').addEventListener('click', () => currentSlide(currentIndex + 1));
-        gallery.addEventListener('keydown', event => {
-            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-                event.preventDefault();
-                currentSlide(currentIndex + (event.key === 'ArrowRight' ? 1 : -1));
-            }
-        });
-        let swipeStart = null;
-        gallery.addEventListener('pointerdown', event => {
-            if (!event.isPrimary || event.button !== 0 || event.target.closest('button')) return;
-            swipeStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
-            gallery.setPointerCapture(event.pointerId);
+        function restartAutoSlide() {
             clearInterval(autoSlideTimer);
-        });
-        gallery.addEventListener('pointerup', event => {
-            if (!swipeStart || event.pointerId !== swipeStart.id) return;
-            const dx = event.clientX - swipeStart.x;
-            const dy = event.clientY - swipeStart.y;
-            swipeStart = null;
-            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-                currentSlide(currentIndex + (dx < 0 ? 1 : -1));
-            } else restartAutoSlide();
-        });
-        gallery.addEventListener('pointercancel', () => { swipeStart = null; restartAutoSlide(); });
-        document.addEventListener('visibilitychange', restartAutoSlide);
+            autoSlideTimer = setInterval(() => {
+                currentIndex = (currentIndex + 1) % getVisiblePhotos().length;
+                updateSlidePosition(true);
+            }, 5000);
+        }
+
+        document.getElementById('prevSlide').addEventListener('click', () => { currentIndex = (currentIndex - 1 + getVisiblePhotos().length) % getVisiblePhotos().length; updateSlidePosition(); restartAutoSlide(); });
+        document.getElementById('nextSlide').addEventListener('click', () => { currentIndex = (currentIndex + 1) % getVisiblePhotos().length; updateSlidePosition(); restartAutoSlide(); });
         updateSlidePosition();
         restartAutoSlide();
 
         function openConfirmModal() {
             const nameVal = document.getElementById('nameInput').value.trim();
-            const companyVal = document.getElementById('companyInput').value.trim() || "Independent";
             const dateVal = document.getElementById('dateInput').value;
             const contactVal = document.getElementById('contactInput').value.trim();
 
@@ -530,8 +233,11 @@
                 return;
             }
 
+            const countryCode = document.getElementById('countryCode').value;
+            const fullPhone = `${countryCode} ${contactVal}`;
             const titleVal = document.getElementById('titleInput').value.trim() || "Not specified";
-            document.getElementById('confirmText').textContent = `${nameVal} (${companyVal} / ${titleVal}) · ${dateVal} · ${contactVal}. Generate your course proposal?`;
+            
+            document.getElementById('confirmText').textContent = `${nameVal} · ${dateVal} · ${fullPhone}. Send your VIP request?`;
             document.getElementById('confirmModal').classList.add('active');
         }
 
@@ -547,89 +253,51 @@
                     alert('Please enter the exact party size (5–100).'); return;
                 }
             }
-            if (!party || !selected('vibe') || !selected('budget') || !selected('guideType') || !field('hotelInput')) {
-                alert('Please select party size, vibe, budget, guide and hotel.'); return;
+            if (!party || !selected('vibe') || !selected('budget') || !selected('guideType') || !field('hotelInput') || !field('contactInput')) {
+                alert('Please select all required fields and enter your phone number.'); return;
             }
             submitting = true;
             document.getElementById('confirmModal').classList.remove('active');
             const button = document.querySelector('#formContent .submit-btn');
             button.disabled = true;
             button.textContent = 'Creating your itinerary…';
+
             try {
+                const fullPhone = `${field('countryCode')} ${field('contactInput')}`;
+                
+                // 백엔드 통신 (보안 헤더 x-busan-request 포함)
                 const response = await fetch('/api/reservation', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-busan-request': '1'
+                    },
                     body: JSON.stringify({
-                        name: field('nameInput'), company: field('companyInput'), jobTitle: field('titleInput'),
-                        visitDate: field('dateInput'), partySize: party, vibe: selected('vibe'),
-                        budget: selected('budget'), guideType: selected('guideType'), hotel: field('hotelInput'),
-                        contact: `${field('countryCode')} ${field('contactInput')}`
+                        name: field('nameInput'), 
+                        company: field('companyInput'), 
+                        jobTitle: field('titleInput'),
+                        visitDate: field('dateInput'), 
+                        partySize: party, 
+                        vibe: selected('vibe'),
+                        budget: selected('budget'), 
+                        guideType: selected('guideType'), 
+                        hotel: field('hotelInput'),
+                        phone: fullPhone
                     })
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Please check your required fields.');
-                if (result.status !== 'success') { alert(result.message); return; }
-                const content = document.getElementById('formContent');
-                content.replaceChildren();
-                const heading = document.createElement('h2');
-                heading.textContent = result.demo ? 'Demo Itinerary' : 'Your Busan Itinerary';
-                const note = document.createElement('p');
-                note.textContent = 'Choose your evening. Menu subtotals fit your budget. Additional fees are pending, so the final total is not confirmed. Quotes are valid for 24 hours.';
-                const preview = document.createElement('iframe');
-                preview.title = 'Personalized Busan flyer';
-                preview.setAttribute('sandbox', 'allow-same-origin allow-modals');
-                preview.style.cssText = 'width:100%;height:850px;border:0;background:#fcfaf5;margin-top:20px';
-                preview.srcdoc = result.flyer_html;
-                const print = document.createElement('button');
-                print.className = 'submit-btn';
-                print.textContent = 'Print / Save PDF';
-                print.disabled = true;
-                preview.onload = () => { print.disabled = false; };
-                print.onclick = () => { preview.contentWindow.focus(); preview.contentWindow.print(); };
-                const back = document.createElement('button');
-                back.className = 'submit-btn'; back.textContent = 'Start Again'; back.onclick = () => location.reload();
-                const choices = document.createElement('div');
-                let choice = result.options[0];
-                const selectButtons = [];
-                for (const option of result.options) {
-                    const pick = document.createElement('button');
-                    pick.className = 'submit-btn';
-                    pick.textContent = `Option ${option.id} · ₩${option.total_krw.toLocaleString()} — ${option.courses.map(c => c.name).join(' + ')}`;
-                    pick.setAttribute('aria-pressed', String(option.id === choice.id));
-                    pick.onclick = () => {
-                        choice = option; print.disabled = true; preview.srcdoc = option.flyer_html;
-                        selectButtons.forEach(b => b.setAttribute('aria-pressed', String(b === pick)));
-                        confirm.textContent = `Choose Option ${option.id} / Get Invoice`;
-                    };
-                    selectButtons.push(pick); choices.append(pick);
-                }
-                const confirm = document.createElement('button');
-                confirm.className = 'submit-btn';
-                confirm.textContent = `Choose Option ${choice.id} / Get Invoice`;
-                const invoiceStatus = document.createElement('p');
-                invoiceStatus.setAttribute('role', 'status');
-                confirm.onclick = async () => {
-                    confirm.disabled = true;
-                    selectButtons.forEach(b => b.disabled = true);
-                    invoiceStatus.textContent = 'Preparing invoice…';
-                    try {
-                        const response = await fetch('/api/selection', {method:'POST', headers:{'Content-Type':'application/json'},
-                            body:JSON.stringify({quote_token:result.quote_token, option_id:choice.id})});
-                        const selected = await response.json();
-                        if (!response.ok) throw new Error(typeof selected.detail === 'string' ? selected.detail : 'Unable to select course.');
-                        heading.textContent = selected.invoice.invoice_status === 'draft' ? 'Draft Invoice · Fees Pending' : 'Your Invoice';
-                        note.textContent = selected.invoice.notice;
-                        print.disabled = true; preview.srcdoc = selected.invoice_html;
-                        print.textContent = 'Print Invoice / Save PDF';
-                        confirm.hidden = true;
-                        invoiceStatus.textContent = `${selected.invoice.id} · ₩${selected.invoice.total_krw.toLocaleString()} · Unpaid`;
-                    } catch(error) {
-                        invoiceStatus.textContent = error.message;
-                        confirm.disabled = false; selectButtons.forEach(b => b.disabled = false);
+                
+                if (result.whatsapp_url) {
+                    if (confirm("Request submitted successfully! Click OK to open WhatsApp and connect with your concierge now.")) {
+                        window.open(result.whatsapp_url, '_blank');
                     }
-                };
-                content.append(heading, note, choices, preview, print, confirm, invoiceStatus, back);
+                } else {
+                    alert("Request submitted successfully!");
+                }
+                location.reload();
             } catch (error) {
-                alert(error.message || 'Unable to create itinerary. Please try again.');
+                alert(error.message || 'Unable to create reservation. Please try again.');
             } finally {
                 submitting = false;
                 button.disabled = false;

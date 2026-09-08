@@ -5,92 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busan Private Concierge</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
-            padding: 20px 0;
+            padding: 0;
             background-color: #0b0b0b;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 100vw;
             min-height: 100vh;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
-        .card {
-            width: 100%;
-            max-width: 420px;
+
+        /* 기본 컨테이너 (세로 모드 기준: 위아래 배치) */
+        .wrapper {
+            width: 100vw;
+            min-height: 100vh;
             background: #161616;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
         }
-        .image-container {
+
+        /* 슬라이더 구조 (공통) */
+        .slider-container {
             width: 100%;
-            height: 480px;
+            height: clamp(320px, 48svh, 560px); /* Room for uncropped photos and controls */
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
         .slides {
             display: flex;
             width: 100%;
             height: 100%;
-            transition: transform 0.4s ease-in-out;
+            transition: transform 0.5s ease-in-out;
         }
         .slides img {
             width: 100%;
+            flex: 0 0 100%;
             height: 100%;
-            flex-shrink: 0;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
+            padding: 0;
             pointer-events: none;
         }
-        .image-container::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            background: linear-gradient(to top, #161616, transparent);
-            pointer-events: none;
+
+        /* The foreground stays complete; only the decorative backdrop fills the frame. */
+        .slider-container { isolation: isolate; background: #101014; }
+        .slider-container::before {
+            content: ''; position: absolute; inset: -32px; z-index: -1;
+            background-image: var(--gallery-backdrop);
+            background-position: center; background-size: cover;
+            filter: blur(24px) brightness(0.35); pointer-events: none;
         }
-        .dots {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 6px;
-            z-index: 10;
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .dot.active {
-            background: #d4af37;
-        }
+        .slides { position: relative; }
+
+        /* 입력 폼 영역 */
         .content {
-            padding: 20px 25px 30px 25px;
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
+
         h2 {
-            margin: 0 0 5px 0;
+            margin: 0 0 4px 0;
             font-size: 22px;
             letter-spacing: 0.5px;
             color: #f3f3f3;
         }
         .subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: #d4af37;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -100,10 +91,9 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             display: block;
-            margin-bottom: 8px;
-            margin-top: 15px;
+            margin-bottom: 6px;
+            margin-top: 12px;
         }
-        /* 선택 항목 표시용 태그 스타일 */
         .optional-tag {
             color: #555;
             font-size: 10px;
@@ -118,14 +108,14 @@
         }
         .option-item {
             flex: 1;
-            min-width: 50px;
+            min-width: 45px;
         }
-        .option-item input[type="radio"] {
+        .option-item input[type="radio"], .option-vertical-item input[type="radio"] {
             display: none;
         }
-        .option-item label {
+        .option-item label, .option-vertical-item label {
             display: block;
-            padding: 10px 8px;
+            padding: 9px 8px;
             background: #222;
             border: 1px solid #333;
             border-radius: 8px;
@@ -136,7 +126,8 @@
             transition: all 0.2s;
             margin: 0;
         }
-        .option-item input[type="radio"]:checked + label {
+        .option-item input[type="radio"]:checked + label,
+        .option-vertical-item input[type="radio"]:checked + label {
             background: rgba(212, 175, 55, 0.15);
             border-color: #d4af37;
             color: #d4af37;
@@ -145,35 +136,18 @@
         .options-vertical {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 5px;
-        }
-        .option-vertical-item input[type="radio"] {
-            display: none;
         }
         .option-vertical-item label {
-            display: block;
-            padding: 11px 14px;
-            background: #222;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #ccc;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin: 0;
+            padding: 10px 14px;
+            text-align: left;
         }
-        .option-vertical-item input[type="radio"]:checked + label {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: #d4af37;
-            color: #d4af37;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="date"], select {
+        input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%;
-            padding: 12px;
-            margin-top: 5px;
-            margin-bottom: 5px;
+            padding: 11px 12px;
+            margin-top: 4px;
+            margin-bottom: 4px;
             background: #222;
             border: 1px solid #333;
             border-radius: 8px;
@@ -182,15 +156,13 @@
             box-sizing: border-box;
             outline: none;
         }
-        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus {
             border-color: #d4af37;
-        }
-        select {
-            cursor: pointer;
         }
         .contact-group {
             display: flex;
             gap: 8px;
+            margin-bottom: 4px;
         }
         .contact-group select {
             flex: 1.2;
@@ -198,9 +170,10 @@
         .contact-group input {
             flex: 2.8;
         }
-        button {
+
+        button.submit-btn {
             width: 100%;
-            background: #d4af37;
+            background: linear-gradient(135deg, #e6c563 0%, #c59b27 100%);
             color: #000;
             border: none;
             padding: 14px;
@@ -208,11 +181,12 @@
             font-size: 15px;
             cursor: pointer;
             border-radius: 8px;
-            transition: background 0.2s;
+            transition: opacity 0.2s;
             margin-top: 20px;
+            margin-bottom: 20px;
         }
-        button:active {
-            background: #b8972e;
+        button.submit-btn:active {
+            opacity: 0.8;
         }
 
         .modal-overlay {
@@ -241,11 +215,6 @@
             max-width: 360px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.active .modal-box {
-            transform: translateY(0);
         }
         .modal-title {
             font-size: 18px;
@@ -269,61 +238,114 @@
             width: 100%;
             cursor: pointer;
         }
-        .success-container {
-            text-align: center;
-            padding: 30px 10px;
-        }
-        .success-icon {
-            font-size: 42px;
-            color: #d4af37;
-            margin-bottom: 10px;
-        }
         .required-star {
-            color: #ff4d4d; /* 선명한 빨간색 */
+            color: #ff4d4d;
             font-weight: bold;
         }
+
+        /* 반응형 분기: PC 또는 가로모드 */
+        @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
+            body {
+                overflow: hidden;
+            }
+            .wrapper {
+                flex-direction: row;
+                height: 100vh;
+            }
+            .slider-container {
+                width: 55%;
+                height: 100vh;
+            }
+            .content {
+                width: 45%;
+                height: 100vh;
+                padding: 40px;
+            }
+            /* PC 화면에서는 mobile_main 슬라이드를 숨기고 main 슬라이드를 보여줌 */
+            .mobile-only-slide {
+                display: none !important;
+            }
+            .pc-only-slide {
+                display: block !important;
+            }
+        }
+
+        /* 모바일 화면 분기 */
+        @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
+            /* 모바일 화면에서는 main 슬라이드를 숨기고 mobile_main 슬라이드를 보여줌 */
+            .mobile-only-slide {
+                display: block !important;
+            }
+            .pc-only-slide {
+                display: none !important;
+            }
+        }
+
+        .slider-container { touch-action: pan-y; }
+        .slider-arrow {
+            position: absolute; z-index: 11; border: 1px solid #ffffff66;
+            background: #0009; color: white; cursor: pointer; border-radius: 24px;
+            min-width: 44px; min-height: 44px;
+        }
+        .slider-arrow { top: 50%; transform: translateY(-50%); font-size: 28px; }
+        .slider-prev { left: 12px; } .slider-next { right: 12px; }
+        .slider-container button:focus-visible { outline: 3px solid #d4af37; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) { .slides { transition: none; } }
+        .slides > picture, .slides > img { display: block; flex: 0 0 100%; width: 100%; min-width: 0; height: 100%; }
+        .slides > picture img { display: block; width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="mainCard">
-        <div class="image-container" id="sliderContainer">
+    <div class="wrapper">
+        <!-- 슬라이더 영역 -->
+        <div class="slider-container" id="sliderContainer" role="region" aria-label="Busan photo gallery" aria-roledescription="carousel" tabindex="0">
             <div class="slides" id="slidesTrack">
-                <img src="model1.jpg" alt="Concierge Preview 1">
-                <img src="model2.jpg" alt="Concierge Preview 2">
-                <img src="model3.png" alt="Concierge Preview 3">
-                <img src="model4.png" alt="Concierge Preview 4">
+                <!-- 모바일 전용 첫 번째 슬라이드 (mobile_main.png) -->
+                <img src="mobile_main.png" class="mobile-only-slide" alt="Busan Private Concierge Mobile" draggable="false" decoding="async" fetchpriority="high">
+                
+                <!-- PC/가로모드 전용 첫 번째 슬라이드 (main.png) -->
+                <img src="main.png" class="pc-only-slide" alt="Busan Private Concierge PC" draggable="false" decoding="async" fetchpriority="high" style="display:none;">
+
+                <img src="image1 (1).png" alt="Busan concierge gallery photo 2" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (2).png" alt="Busan concierge gallery photo 3" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (3).png" alt="Busan concierge gallery photo 4" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (4).png" alt="Busan concierge gallery photo 5" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (5).png" alt="Busan concierge gallery photo 6" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (6).png" alt="Busan concierge gallery photo 7" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (7).png" alt="Busan concierge gallery photo 8" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (8).png" alt="Busan concierge gallery photo 9" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (9).png" alt="Busan concierge gallery photo 10" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (10).png" alt="Busan concierge gallery photo 11" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (11).png" alt="Busan concierge gallery photo 12" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (12).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (13).png" alt="Busan concierge gallery photo 14" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (14).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
             </div>
-            <div class="dots" id="dotsContainer">
-                <span class="dot active" onclick="currentSlide(0)"></span>
-                <span class="dot" onclick="currentSlide(1)"></span>
-                <span class="dot" onclick="currentSlide(2)"></span>
-                <span class="dot" onclick="currentSlide(3)"></span>
-            </div>
+            <button class="slider-arrow slider-prev" id="prevSlide" type="button" aria-label="Previous photo">&#8249;</button>
+            <button class="slider-arrow slider-next" id="nextSlide" type="button" aria-label="Next photo">&#8250;</button>
         </div>
+
+        <!-- 예약 입력 폼 영역 -->
         <div class="content" id="formContent">
-            <h2>Busan VIP Nightlife</h2>
+            <h2>Plan Your Night</h2>
             <div class="subtitle">Exclusive VIP Package</div>
-            <p style="font-size: 12px; color: #888; margin-bottom: 20px;">
-            <span class="required-star">*</span> Required fields
+            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+                <span class="required-star">*</span> Required fields
             </p>
 
-            <!-- 필수 항목 -->
             <label class="section-label">Your Name <span class="required-star">*</span></label>
             <input type="text" id="nameInput" placeholder="Enter your name">
 
             <label class="section-label">Company Name <span class="optional-tag">(Optional)</span></label>
             <input type="text" id="companyInput" placeholder="Enter your company name">
 
-            <!-- 선택 항목으로 변경 -->
             <label class="section-label">Job Title / Position <span class="optional-tag">(Optional)</span></label>
             <input type="text" id="titleInput" placeholder="e.g., Director, Manager, CEO">
 
-            <!-- 필수 항목 -->
             <label class="section-label">Visit Date (Schedule) <span class="required-star">*</span></label>
             <input type="date" id="dateInput">
 
-            <!-- 선택 항목들 -->
             <label class="section-label">Party Size <span class="required-star">*</span></label>
             <div class="options-group">
                 <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
@@ -333,6 +355,8 @@
                 <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="More than 4"><label for="p5">5+</label></div>
             </div>
 
+            <label class="section-label">Exact party size (for 5+)</label><input type="number" id="exactPartySize" min="5" max="100" placeholder="Enter exact number for 5+">
+            
             <label class="section-label">Preferred Vibe <span class="required-star">*</span></label>
             <div class="options-vertical">
                 <div class="option-vertical-item"><input type="radio" id="v1" name="vibe" value="Casual Bar"><label for="v1">Casual Lounge & Bar</label></div>
@@ -340,7 +364,7 @@
                 <div class="option-vertical-item"><input type="radio" id="v3" name="vibe" value="Ultimate VIP"><label for="v3">Ultimate VIP Experience</label></div>
             </div>
 
-            <label class="section-label">Estimated Budget (USD) <span class="required-star">*</span></label>
+            <label class="section-label">Total Group Budget (USD) <span class="required-star">*</span></label>
             <div class="options-vertical">
                 <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="500 - 1000"><label for="b1">$500 - $1,000</label></div>
                 <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="1000 - 2000"><label for="b2">$1,000 - $2,000</label></div>
@@ -357,42 +381,26 @@
             <label class="section-label">Hotel Name <span class="required-star">*</span></label>
             <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
 
-            <!-- 필수 항목 -->
-            <label class="section-label">Contact (Country Code & Number / ID) <span class="required-star">*</span></label>
+            <label class="section-label">Contact <span class="required-star">*</span></label>
             <div class="contact-group">
                 <select id="countryCode">
-                    <option value="+1" selected>🇺🇸 +1 (USA / Canada)</option>
-                    <option value="+61">🇦🇺 +61 (Australia)</option>
-                    <option value="+62">🇮🇩 +62 (Indonesia)</option>
-                    <option value="+60">🇲🇾 +60 (Malaysia)</option>
-                    <option value="+91">🇮🇳 +91 (India)</option>
-                    <option value="+63">🇵🇭 +63 (Philippines)</option>
-                    <option value="+86">🇨🇳 +86 (China)</option>
-                    <option value="+81">🇯🇵 +81 (Japan)</option>
-                    <option value="+65">🇸🇬 +65 (Singapore)</option>
-                    <option value="+852">🇭🇰 +852 (Hong Kong)</option>
-                    <option value="+886">🇹🇼 +886 (Taiwan)</option>
-                    <option value="+66">🇹🇭 +66 (Thailand)</option>
-                    <option value="+84">🇻🇳 +84 (Vietnam)</option>
-                    <option value="+44">🇬🇧 +44 (United Kingdom)</option>
-                    <option value="+33">🇫🇷 +33 (France)</option>
-                    <option value="+49">🇩🇪 +49 (Germany)</option>
-                    <option value="+41">🇨🇭 +41 (Switzerland)</option>
-                    <option value="+7">🇷🇺 +7 (Russia)</option>
-                    <option value="+48">🇵🇱 +48 (Poland)</option>
-                    <option value="+420">🇨🇿 +420 (Czech Republic)</option>
-                    <option value="+971">🇦🇪 +971 (UAE / Dubai)</option>
-                    <option value="+55">🇧🇷 +55 (Brazil)</option>
-                    <option value="+52">🇲🇽 +52 (Mexico)</option>
-                    <option value="+OTHER">🌐 Other / Messenger ID</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+61">🇦🇺 +61</option>
+                    <option value="+82" selected>🇰🇷 +82</option>
+                    <option value="+81">🇯🇵 +81</option>
+                    <option value="+86">🇨🇳 +86</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+OTHER">🌐 Other</option>
                 </select>
-                <input type="text" id="contactInput" placeholder="Phone or WhatsApp ID">
+                <input type="text" id="contactInput" placeholder="Phone Number">
             </div>
+            <p style="font-size:12px;color:#888">Preview only. SMS verification and delivery are not connected yet.</p>
 
-            <button onclick="openConfirmModal()">Request Access</button>
+            <button class="submit-btn" onclick="openConfirmModal()">Request Access</button>
         </div>
     </div>
 
+    <!-- 확인 모달 -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title">Confirm Request</div>
@@ -404,100 +412,228 @@
     <script>
         let currentIndex = 0;
         const track = document.getElementById('slidesTrack');
-        const slides = track.getElementsByTagName('img');
-        const totalSlides = slides.length;
-        const dots = document.getElementsByClassName('dot');
-        let autoSlideTimer = setInterval(nextSlide, 3500);
-
-        function updateSlidePosition() {
-            track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            for (let i = 0; i < dots.length; i++) dots[i].classList.remove('active');
-            dots[currentIndex].classList.add('active');
+        const gallery = document.getElementById('sliderContainer');
+        
+        // 화면 크기에 따라 현재 보이는 이미지들만 추려냄
+        function getVisiblePhotos() {
+            return Array.from(track.querySelectorAll('img')).filter(img => window.getComputedStyle(img).display !== 'none');
         }
-        function nextSlide() { currentIndex = (currentIndex + 1) % totalSlides; updateSlidePosition(); }
-        function currentSlide(index) { currentIndex = index; updateSlidePosition(); clearInterval(autoSlideTimer); autoSlideTimer = setInterval(nextSlide, 3500); }
+
+        let photos = getVisiblePhotos();
+        let totalSlides = photos.length;
+
+        window.addEventListener('resize', () => {
+            photos = getVisiblePhotos();
+            totalSlides = photos.length;
+            if (currentIndex >= totalSlides) {
+                currentIndex = 0;
+            }
+            updateSlidePosition();
+        });
+
+        photos.forEach(photo => photo.addEventListener('load', () => {
+            if (photo === photos[currentIndex]) updateSlidePosition();
+        }));
+
+        let paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let autoSlideTimer;
+
+        function updateSlidePosition(withTransition = true) {
+            photos = getVisiblePhotos();
+            totalSlides = photos.length;
+            if (totalSlides === 0) return;
+            currentIndex = Math.min(currentIndex, totalSlides - 1);
+
+            const activePhoto = photos[currentIndex];
+            gallery.style.setProperty('--gallery-backdrop', `url("${activePhoto.currentSrc || activePhoto.src}")`);
+            
+            if (withTransition) {
+                track.style.transition = 'transform 0.5s ease-in-out';
+            } else {
+                track.style.transition = 'none'; // 순간 이동할 때는 애니메이션 끄기
+            }
+            
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            track.querySelectorAll('img').forEach((photo) => {
+                const isVisible = window.getComputedStyle(photo).display !== 'none';
+                photo.setAttribute('aria-hidden', String(!isVisible || photo !== activePhoto));
+            });
+        }
+
+        function nextSlide() {
+            photos = getVisiblePhotos();
+            totalSlides = photos.length;
+            if (totalSlides === 0) return;
+
+            currentIndex++;
+            
+            // 마지막 사진을 지나서 다시 처음으로 가야 할 때!
+            if (currentIndex >= totalSlides) {
+                currentIndex = 0;
+                // 애니메이션을 끈 채로 0번(1번 사진) 위치로 순간 이동시킨 다음
+                updateSlidePosition(false);
+                // 브라우저가 강제로 리렌더링할 수 있도록 찰나의 틈을 줌
+                setTimeout(() => {
+                    track.style.transition = 'transform 0.5s ease-in-out';
+                }, 50);
+                return;
+            }
+            updateSlidePosition(true);
+        }
+
+        function currentSlide(index) {
+            photos = getVisiblePhotos();
+            totalSlides = photos.length;
+            if (totalSlides === 0) return;
+            currentIndex = ((index % totalSlides) + totalSlides) % totalSlides;
+            updateSlidePosition();
+            restartAutoSlide();
+        }
+        document.getElementById('prevSlide').addEventListener('click', () => currentSlide(currentIndex - 1));
+        document.getElementById('nextSlide').addEventListener('click', () => currentSlide(currentIndex + 1));
+        gallery.addEventListener('keydown', event => {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                currentSlide(currentIndex + (event.key === 'ArrowRight' ? 1 : -1));
+            }
+        });
+        let swipeStart = null;
+        gallery.addEventListener('pointerdown', event => {
+            if (!event.isPrimary || event.button !== 0 || event.target.closest('button')) return;
+            swipeStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
+            gallery.setPointerCapture(event.pointerId);
+            clearInterval(autoSlideTimer);
+        });
+        gallery.addEventListener('pointerup', event => {
+            if (!swipeStart || event.pointerId !== swipeStart.id) return;
+            const dx = event.clientX - swipeStart.x;
+            const dy = event.clientY - swipeStart.y;
+            swipeStart = null;
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+                currentSlide(currentIndex + (dx < 0 ? 1 : -1));
+            } else restartAutoSlide();
+        });
+        gallery.addEventListener('pointercancel', () => { swipeStart = null; restartAutoSlide(); });
+        document.addEventListener('visibilitychange', restartAutoSlide);
+        updateSlidePosition();
+        restartAutoSlide();
 
         function openConfirmModal() {
-            // 필수 항목만 검증 (Name, Company, Date, Contact)
             const nameVal = document.getElementById('nameInput').value.trim();
-            const companyVal = document.getElementById('companyInput').value.trim();
+            const companyVal = document.getElementById('companyInput').value.trim() || "Independent";
             const dateVal = document.getElementById('dateInput').value;
             const contactVal = document.getElementById('contactInput').value.trim();
 
-            if (!nameVal || !companyVal || !dateVal || !contactVal) {
-                alert("Please fill in the required fields (*Name, Company, Date, Contact).");
+            if (!nameVal || !dateVal || !contactVal) {
+                alert("Please fill in the required fields (*Name, Date, Contact).");
                 return;
             }
 
             const titleVal = document.getElementById('titleInput').value.trim() || "Not specified";
-            document.getElementById('confirmText').innerHTML = `<b>${nameVal}</b> (${companyVal} / ${titleVal})<br>Date: <b>${dateVal}</b><br>Proceed with request?`;
+            document.getElementById('confirmText').textContent = `${nameVal} (${companyVal} / ${titleVal}) · ${dateVal} · ${contactVal}. Generate your course proposal?`;
             document.getElementById('confirmModal').classList.add('active');
         }
 
+        let submitting = false;
         async function submitData() {
+            if (submitting) return;
+            const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
+            const field = id => document.getElementById(id).value.trim();
+            let party = selected('partySize');
+            if (party === 'More than 4') {
+                party = field('exactPartySize');
+                if (!/^\d+$/.test(party) || Number(party) < 5 || Number(party) > 100) {
+                    alert('Please enter the exact party size (5–100).'); return;
+                }
+            }
+            if (!party || !selected('vibe') || !selected('budget') || !selected('guideType') || !field('hotelInput')) {
+                alert('Please select party size, vibe, budget, guide and hotel.'); return;
+            }
+            submitting = true;
             document.getElementById('confirmModal').classList.remove('active');
-
-            const nameVal = document.getElementById('nameInput').value.trim();
-            const companyVal = document.getElementById('companyInput').value.trim();
-            const titleVal = document.getElementById('titleInput').value.trim() || "N/A";
-            const dateVal = document.getElementById('dateInput').value;
-            const countryCode = document.getElementById('countryCode').value;
-            const contactVal = document.getElementById('contactInput').value.trim();
-            const fullContact = `${countryCode} ${contactVal}`;
-
-            // 선택 항목들은 입력 안 했으면 'Not specified'로 처리
-            const hotelVal = document.getElementById('hotelInput').value.trim() || "N/A";
-            const partySizeChecked = document.querySelector('input[name="partySize"]:checked');
-            const vibeChecked = document.querySelector('input[name="vibe"]:checked');
-            const budgetChecked = document.querySelector('input[name="budget"]:checked');
-            const guideChecked = document.querySelector('input[name="guideType"]:checked');
-
-            const partySizeVal = partySizeChecked ? partySizeChecked.value : "N/A";
-            const vibeVal = vibeChecked ? vibeChecked.value : "N/A";
-            const budgetVal = budgetChecked ? `$${budgetChecked.value}` : "N/A";
-            const guideVal = guideChecked ? guideChecked.value : "N/A";
-
-            const botToken = '8175244050:AAH2roCg92UBZfAv5eL4niMbM6LavE0VSoc';
-            const chatId = '-1004353056100';
-            const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-            // 텔레그램 메시지 구성
-            const message = 
-                `🚨 [New VIP Reservation Request]\n\n` +
-                `- Name: ${nameVal} (Required)\n` +
-                `- Company: ${companyVal} (Required)\n` +
-                `- Job Title: ${titleVal}\n` +
-                `- Visit Date: ${dateVal} (Required)\n` +
-                `- Party Size: ${partySizeVal}\n` +
-                `- Vibe: ${vibeVal}\n` +
-                `- Budget: ${budgetVal}\n` +
-                `- Guide Type: ${guideVal}\n` +
-                `- Hotel: ${hotelVal}\n` +
-                `- Contact: ${fullContact} (Required)`;
-
+            const button = document.querySelector('#formContent .submit-btn');
+            button.disabled = true;
+            button.textContent = 'Creating your itinerary…';
             try {
-                await fetch(telegramUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: message })
+                const response = await fetch('/api/reservation', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: field('nameInput'), company: field('companyInput'), jobTitle: field('titleInput'),
+                        visitDate: field('dateInput'), partySize: party, vibe: selected('vibe'),
+                        budget: selected('budget'), guideType: selected('guideType'), hotel: field('hotelInput'),
+                        contact: `${field('countryCode')} ${field('contactInput')}`
+                    })
                 });
-
-                document.getElementById('formContent').innerHTML = `
-                    <div class="success-container">
-                        <div class="success-icon">✦</div>
-                        <h2>Request Received</h2>
-                        <div class="subtitle" style="margin-bottom: 15px;">Invoice & Curation Guideline</div>
-                        <p style="font-size: 13px; color: #ccc; line-height: 1.6; margin-bottom: 20px; text-align: left;">
-                            <b>[Next Steps]</b><br>
-                            1. Our concierge team is reviewing your schedule for <b>${dateVal}</b>.<br>
-                            2. We will shortly send your customized <b>course guide and invoice</b> to your contact (<b>${fullContact}</b>).
-                        </p>
-                        <button onclick="location.reload()">Back to Home</button>
-                    </div>
-                `;
+                const result = await response.json();
+                if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Please check your required fields.');
+                if (result.status !== 'success') { alert(result.message); return; }
+                const content = document.getElementById('formContent');
+                content.replaceChildren();
+                const heading = document.createElement('h2');
+                heading.textContent = result.demo ? 'Demo Itinerary' : 'Your Busan Itinerary';
+                const note = document.createElement('p');
+                note.textContent = 'Choose your evening. Menu subtotals fit your budget. Additional fees are pending, so the final total is not confirmed. Quotes are valid for 24 hours.';
+                const preview = document.createElement('iframe');
+                preview.title = 'Personalized Busan flyer';
+                preview.setAttribute('sandbox', 'allow-same-origin allow-modals');
+                preview.style.cssText = 'width:100%;height:850px;border:0;background:#fcfaf5;margin-top:20px';
+                preview.srcdoc = result.flyer_html;
+                const print = document.createElement('button');
+                print.className = 'submit-btn';
+                print.textContent = 'Print / Save PDF';
+                print.disabled = true;
+                preview.onload = () => { print.disabled = false; };
+                print.onclick = () => { preview.contentWindow.focus(); preview.contentWindow.print(); };
+                const back = document.createElement('button');
+                back.className = 'submit-btn'; back.textContent = 'Start Again'; back.onclick = () => location.reload();
+                const choices = document.createElement('div');
+                let choice = result.options[0];
+                const selectButtons = [];
+                for (const option of result.options) {
+                    const pick = document.createElement('button');
+                    pick.className = 'submit-btn';
+                    pick.textContent = `Option ${option.id} · ₩${option.total_krw.toLocaleString()} — ${option.courses.map(c => c.name).join(' + ')}`;
+                    pick.setAttribute('aria-pressed', String(option.id === choice.id));
+                    pick.onclick = () => {
+                        choice = option; print.disabled = true; preview.srcdoc = option.flyer_html;
+                        selectButtons.forEach(b => b.setAttribute('aria-pressed', String(b === pick)));
+                        confirm.textContent = `Choose Option ${option.id} / Get Invoice`;
+                    };
+                    selectButtons.push(pick); choices.append(pick);
+                }
+                const confirm = document.createElement('button');
+                confirm.className = 'submit-btn';
+                confirm.textContent = `Choose Option ${choice.id} / Get Invoice`;
+                const invoiceStatus = document.createElement('p');
+                invoiceStatus.setAttribute('role', 'status');
+                confirm.onclick = async () => {
+                    confirm.disabled = true;
+                    selectButtons.forEach(b => b.disabled = true);
+                    invoiceStatus.textContent = 'Preparing invoice…';
+                    try {
+                        const response = await fetch('/api/selection', {method:'POST', headers:{'Content-Type':'application/json'},
+                            body:JSON.stringify({quote_token:result.quote_token, option_id:choice.id})});
+                        const selected = await response.json();
+                        if (!response.ok) throw new Error(typeof selected.detail === 'string' ? selected.detail : 'Unable to select course.');
+                        heading.textContent = selected.invoice.invoice_status === 'draft' ? 'Draft Invoice · Fees Pending' : 'Your Invoice';
+                        note.textContent = selected.invoice.notice;
+                        print.disabled = true; preview.srcdoc = selected.invoice_html;
+                        print.textContent = 'Print Invoice / Save PDF';
+                        confirm.hidden = true;
+                        invoiceStatus.textContent = `${selected.invoice.id} · ₩${selected.invoice.total_krw.toLocaleString()} · Unpaid`;
+                    } catch(error) {
+                        invoiceStatus.textContent = error.message;
+                        confirm.disabled = false; selectButtons.forEach(b => b.disabled = false);
+                    }
+                };
+                content.append(heading, note, choices, preview, print, confirm, invoiceStatus, back);
             } catch (error) {
-                console.error('Error:', error);
-                alert("Network error. Please check your connection.");
+                alert(error.message || 'Unable to create itinerary. Please try again.');
+            } finally {
+                submitting = false;
+                button.disabled = false;
+                button.textContent = 'Request Access';
             }
         }
     </script>

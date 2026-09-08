@@ -83,6 +83,8 @@
             .pc-only-slide { display: none !important; }
         }
     </style>
+    <script src="api-config.js"></script>
+    <script src="booking-api.js"></script>
 </head>
 <body>
 
@@ -94,6 +96,17 @@
                 <img src="image1 (1).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
                 <img src="image1 (2).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
                 <img src="image1 (3).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (4).png" alt="Busan concierge gallery photo 4" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (5).png" alt="Busan concierge gallery photo 5" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (6).png" alt="Busan concierge gallery photo 6" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (7).png" alt="Busan concierge gallery photo 7" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (8).png" alt="Busan concierge gallery photo 8" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (9).png" alt="Busan concierge gallery photo 9" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (10).png" alt="Busan concierge gallery photo 10" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (11).png" alt="Busan concierge gallery photo 11" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (12).png" alt="Busan concierge gallery photo 12" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (13).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
+                <img src="image1 (14).png" alt="Busan concierge gallery photo 14" draggable="false" decoding="async" loading="lazy">
             </div>
             <button class="slider-arrow slider-prev" id="prevSlide" type="button" aria-label="Previous photo">&#8249;</button>
             <button class="slider-arrow slider-next" id="nextSlide" type="button" aria-label="Next photo">&#8250;</button>
@@ -183,45 +196,68 @@
         let currentIndex = 0;
         const track = document.getElementById('slidesTrack');
         const gallery = document.getElementById('sliderContainer');
-        
-        function getVisiblePhotos() {
-            return Array.from(track.querySelectorAll('img')).filter(img => window.getComputedStyle(img).display !== 'none');
-        }
-
-        let photos = getVisiblePhotos();
-        let totalSlides = photos.length;
-
-        window.addEventListener('resize', () => {
-            photos = getVisiblePhotos();
-            totalSlides = photos.length;
-            if (currentIndex >= totalSlides) currentIndex = 0;
-            updateSlidePosition();
-        });
-
+        const originalPhotos = Array.from(track.querySelectorAll('img'));
+        let photos = [];
+        let moving = false;
         let autoSlideTimer;
+
         function updateSlidePosition(withTransition = true) {
-            photos = getVisiblePhotos();
-            totalSlides = photos.length;
-            if (totalSlides === 0) return;
-            currentIndex = Math.min(currentIndex, totalSlides - 1);
-            const activePhoto = photos[currentIndex];
+            if (!photos.length) return;
+            const activePhoto = photos[(currentIndex + photos.length) % photos.length];
             gallery.style.setProperty('--gallery-backdrop', `url("${activePhoto.currentSrc || activePhoto.src}")`);
             track.style.transition = withTransition ? 'transform 0.5s ease-in-out' : 'none';
-            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            track.style.transform = `translateX(-${(currentIndex + 1) * 100}%)`;
         }
+
+        function rebuildGallery() {
+            track.querySelectorAll('[data-loop-clone]').forEach(photo => photo.remove());
+            photos = originalPhotos.filter(photo => getComputedStyle(photo).display !== 'none');
+            if (!photos.length) return;
+            currentIndex = (currentIndex + photos.length) % photos.length;
+            function clone(photo) {
+                const copy = photo.cloneNode(true);
+                copy.removeAttribute('class');
+                copy.removeAttribute('id');
+                copy.style.display = 'block';
+                copy.dataset.loopClone = 'true';
+                copy.setAttribute('aria-hidden', 'true');
+                copy.loading = 'eager';
+                return copy;
+            }
+            track.prepend(clone(photos[photos.length - 1]));
+            track.append(clone(photos[0]));
+            moving = false;
+            updateSlidePosition(false);
+        }
+
+        function moveSlide(direction) {
+            if (moving || photos.length < 2) return;
+            moving = true;
+            currentIndex += direction;
+            updateSlidePosition(true);
+        }
+
+        track.addEventListener('transitionend', event => {
+            if (event.target !== track || event.propertyName !== 'transform') return;
+            if (currentIndex < 0 || currentIndex >= photos.length) {
+                currentIndex = (currentIndex + photos.length) % photos.length;
+                updateSlidePosition(false);
+                // Commit the invisible reset before accepting another movement.
+                void track.offsetWidth;
+            }
+            moving = false;
+        });
 
         function restartAutoSlide() {
             clearInterval(autoSlideTimer);
-            autoSlideTimer = setInterval(() => {
-                currentIndex = (currentIndex + 1) % getVisiblePhotos().length;
-                updateSlidePosition(true);
-            }, 5000);
+            autoSlideTimer = setInterval(() => moveSlide(1), 5000);
         }
-
-        document.getElementById('prevSlide').addEventListener('click', () => { currentIndex = (currentIndex - 1 + getVisiblePhotos().length) % getVisiblePhotos().length; updateSlidePosition(); restartAutoSlide(); });
-        document.getElementById('nextSlide').addEventListener('click', () => { currentIndex = (currentIndex + 1) % getVisiblePhotos().length; updateSlidePosition(); restartAutoSlide(); });
-        updateSlidePosition();
+        window.addEventListener('resize', rebuildGallery);
+        document.getElementById('prevSlide').addEventListener('click', () => { moveSlide(-1); restartAutoSlide(); });
+        document.getElementById('nextSlide').addEventListener('click', () => { moveSlide(1); restartAutoSlide(); });
+        rebuildGallery();
         restartAutoSlide();
+
 
         function openConfirmModal() {
             const nameVal = document.getElementById('nameInput').value.trim();
@@ -265,8 +301,8 @@
             try {
                 const fullPhone = `${field('countryCode')} ${field('contactInput')}`;
                 
-                // 백엔드 통신 (보안 헤더 x-busan-request 포함)
-                const response = await fetch('/api/reservation', {
+                // Submit to the configured booking server.
+                const response = await fetch(window.busanReservationUrl(), {
                     method: 'POST', 
                     headers: {
                         'Content-Type': 'application/json',
@@ -285,9 +321,13 @@
                         phone: fullPhone
                     })
                 });
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error('The booking service is unavailable. Please try again later.');
+                }
                 const result = await response.json();
                 if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Please check your required fields.');
                 
+                if (result.status !== 'success' || !Number.isInteger(result.reservation_id)) throw new Error('Unexpected booking response. Please contact the concierge before retrying.');
                 if (result.whatsapp_url) {
                     if (confirm("Request submitted successfully! Click OK to open WhatsApp and connect with your concierge now.")) {
                         window.open(result.whatsapp_url, '_blank');

@@ -158,6 +158,11 @@ def create_reservation(data: ReservationRequest):
         'message': 'Your request has been successfully submitted.'
     }
 
+@app.get('/')
+def home():
+    return FileResponse(ROOT / 'index.html')
+
+
 @app.get('/{asset}')
 def static_asset(asset: str):
     allowed = {
@@ -175,6 +180,11 @@ def static_asset(asset: str):
         raise HTTPException(404)
     return FileResponse(path)
 
+
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host=os.getenv('BUSAN_HOST', '127.0.0.1'), port=int(os.getenv('PORT', os.getenv('BUSAN_PHONE_PORT', '8001'))))
+    uvicorn.run(
+        app,
+        host=os.getenv('BUSAN_HOST', '127.0.0.1'),
+        port=int(os.getenv('PORT', os.getenv('BUSAN_PHONE_PORT', '8001'))),
+    )

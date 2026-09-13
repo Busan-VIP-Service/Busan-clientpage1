@@ -50,6 +50,15 @@
             display: inline-block; margin-left: 7px; color: #f1d675;
             font-size: 13px; font-weight: 800; letter-spacing: 0.2px;
         }
+        .deposit-card {
+            margin: 14px 0 4px; padding: 15px; border: 1px solid #d4af37;
+            border-radius: 10px; background: linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
+        }
+        .deposit-card strong { display: block; color: #f1d675; font-size: 17px; margin-bottom: 5px; }
+        .deposit-card p { margin: 0; color: #ccc; font-size: 12px; line-height: 1.55; }
+        #paypal-button-container { min-height: 45px; }
+        .payment-status { min-height: 20px; margin-top: 8px; color: #bbb; font-size: 12px; line-height: 1.4; }
+        .modal-cancel { margin-top: 10px; border: 0; background: transparent; color: #999; cursor: pointer; }
         input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
             background: #222; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box; outline: none;
@@ -145,16 +154,12 @@
                 <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
                 <div class="option-item"><input type="radio" id="p3" name="partySize" value="3"><label for="p3">3</label></div>
                 <div class="option-item"><input type="radio" id="p4" name="partySize" value="4"><label for="p4">4</label></div>
-                <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="More than 4"><label for="p5">5+</label></div>
+                <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="5+"><label for="p5">5+</label></div>
             </div>
 
-            <label class="section-label">Exact party size (for 5+)</label><input type="number" id="exactPartySize" min="5" max="100" placeholder="Enter exact number for 5+">
-            
-            <label class="section-label">Preferred Vibe <span class="required-star">*</span></label>
-            <div class="options-vertical">
-                <div class="option-vertical-item"><input type="radio" id="v1" name="vibe" value="Casual Bar"><label for="v1">Casual Lounge & Bar</label></div>
-                <div class="option-vertical-item"><input type="radio" id="v2" name="vibe" value="Dynamic Night"><label for="v2">Dynamic & Private Room</label></div>
-                <div class="option-vertical-item"><input type="radio" id="v3" name="vibe" value="Ultimate VIP"><label for="v3">Ultimate VIP Experience</label></div>
+            <div class="deposit-card">
+                <strong>US$50 Reservation Deposit</strong>
+                <p>A deposit is required to secure your reservation and prevent no-shows. It will be credited toward your final booking amount. The remaining balance is confirmed by your concierge and paid in Korean won cash.</p>
             </div>
 
             <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
@@ -189,16 +194,18 @@
                 <input type="text" id="contactInput" placeholder="Phone Number (e.g. 01012345678)">
             </div>
 
-            <button class="submit-btn" onclick="openConfirmModal()">Request Access</button>
+            <button class="submit-btn" onclick="openPaymentModal()">Continue to US$50 Deposit</button>
         </div>
     </div>
 
     <!-- 확인 모달 -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
-            <div class="modal-title">Confirm Request</div>
-            <div class="modal-desc" id="confirmText">Are you ready to submit your VIP concierge curation request?</div>
-            <button class="modal-btn" onclick="submitData()">Confirm & Send</button>
+            <div class="modal-title">Secure Your Reservation</div>
+            <div class="modal-desc" id="confirmText">Complete the US$50 deposit to submit your reservation.</div>
+            <div id="paypal-button-container"></div>
+            <div class="payment-status" id="paymentStatus"></div>
+            <button class="modal-cancel" type="button" onclick="closePaymentModal()">Back to form</button>
         </div>
     </div>
 
@@ -269,91 +276,95 @@
         restartAutoSlide();
 
 
-        function openConfirmModal() {
-            const nameVal = document.getElementById('nameInput').value.trim();
-            const dateVal = document.getElementById('dateInput').value;
-            const contactVal = document.getElementById('contactInput').value.trim();
+        const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
+        const field = id => document.getElementById(id).value.trim();
+        let paypalReady = false;
 
-            if (!nameVal || !dateVal || !contactVal) {
-                alert("Please fill in the required fields (*Name, Date, Contact).");
-                return;
-            }
-
-            const countryCode = document.getElementById('countryCode').value;
-            const fullPhone = `${countryCode} ${contactVal}`;
-            const titleVal = document.getElementById('titleInput').value.trim() || "Not specified";
-            
-            document.getElementById('confirmText').textContent = `${nameVal} · ${dateVal} · ${fullPhone}. Send your VIP request?`;
-            document.getElementById('confirmModal').classList.add('active');
+        function reservationData() {
+            return {
+                name: field('nameInput'), company: field('companyInput'), jobTitle: field('titleInput'),
+                visitDate: field('dateInput'), partySize: selected('partySize'), budget: selected('budget'),
+                guideType: selected('guideType'), hotel: field('hotelInput'),
+                phone: `${field('countryCode')} ${field('contactInput')}`
+            };
         }
 
-        let submitting = false;
-        async function submitData() {
-            if (submitting) return;
-            const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
-            const field = id => document.getElementById(id).value.trim();
-            let party = selected('partySize');
-            if (party === 'More than 4') {
-                party = field('exactPartySize');
-                if (!/^\d+$/.test(party) || Number(party) < 5 || Number(party) > 100) {
-                    alert('Please enter the exact party size (5–100).'); return;
-                }
+        function validateReservation() {
+            const data = reservationData();
+            if (!data.name || !data.visitDate || !data.partySize || !data.budget || !data.guideType || !data.hotel || !field('contactInput')) {
+                alert('Please complete all required fields before continuing to payment.');
+                return false;
             }
-            if (!party || !selected('vibe') || !selected('budget') || !selected('guideType') || !field('hotelInput') || !field('contactInput')) {
-                alert('Please select all required fields and enter your phone number.'); return;
-            }
-            submitting = true;
-            document.getElementById('confirmModal').classList.remove('active');
-            const button = document.querySelector('#formContent .submit-btn');
-            button.disabled = true;
-            button.textContent = 'Creating your itinerary…';
+            return true;
+        }
 
-            try {
-                const fullPhone = `${field('countryCode')} ${field('contactInput')}`;
-                
-                // Submit to the configured booking server.
-                const response = await fetch(window.busanReservationUrl(), {
-                    method: 'POST', 
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-busan-request': '1'
-                    },
-                    body: JSON.stringify({
-                        name: field('nameInput'), 
-                        company: field('companyInput'), 
-                        jobTitle: field('titleInput'),
-                        visitDate: field('dateInput'), 
-                        partySize: party, 
-                        vibe: selected('vibe'),
-                        budget: selected('budget'), 
-                        guideType: selected('guideType'), 
-                        hotel: field('hotelInput'),
-                        phone: fullPhone
-                    })
-                });
-                if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error('The booking service is unavailable. Please try again later.');
-                }
-                const result = await response.json();
-                if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Please check your required fields.');
-                
-                if (result.status !== 'success' || !Number.isInteger(result.reservation_id)) throw new Error('Unexpected booking response. Please contact the concierge before retrying.');
-                if (result.whatsapp_url) {
-                    if (confirm("Request submitted successfully! Click OK to open WhatsApp and connect with your concierge now.")) {
+        async function apiJson(path, options = {}) {
+            const response = await fetch(window.busanApiUrl(path), options);
+            if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('The payment service is unavailable.');
+            const result = await response.json();
+            if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Unable to process payment.');
+            return result;
+        }
+
+        function loadPayPalSdk(clientId) {
+            if (window.paypal) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&components=buttons`;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Unable to load PayPal. Please try again.'));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function preparePayPal() {
+            if (paypalReady) return;
+            const status = document.getElementById('paymentStatus');
+            status.textContent = 'Loading secure PayPal checkout…';
+            const config = await apiJson('/api/paypal/config');
+            if (!config.enabled || !config.client_id) throw new Error('PayPal checkout is being configured. Please contact the concierge.');
+            await loadPayPalSdk(config.client_id);
+            await window.paypal.Buttons({
+                style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
+                createOrder: async () => {
+                    if (!validateReservation()) throw new Error('Please check the reservation form.');
+                    status.textContent = 'Creating your secure US$50 deposit…';
+                    const order = await apiJson('/api/paypal/orders', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' },
+                        body: JSON.stringify(reservationData())
+                    });
+                    return order.order_id;
+                },
+                onApprove: async data => {
+                    status.textContent = 'Confirming your payment…';
+                    const result = await apiJson(`/api/paypal/orders/${encodeURIComponent(data.orderID)}/capture`, {
+                        method: 'POST', headers: { 'x-busan-request': '1' }
+                    });
+                    status.textContent = `Reservation #${result.reservation_id} confirmed. Your US$50 deposit was received.`;
+                    if (result.whatsapp_url && confirm('Payment received! Click OK to connect with your concierge on WhatsApp.')) {
                         window.open(result.whatsapp_url, '_blank');
                     }
-                } else {
-                    alert("Request submitted successfully!");
-                }
-                location.reload();
-            } catch (error) {
-                alert(error.message || 'Unable to create reservation. Please try again.');
-            } finally {
-                submitting = false;
-                button.disabled = false;
-                button.textContent = 'Request Access';
-            }
+                    setTimeout(() => location.reload(), 1200);
+                },
+                onCancel: () => { status.textContent = 'Payment was cancelled. Your reservation has not been submitted.'; },
+                onError: error => { status.textContent = error.message || 'Payment could not be completed. Please try again.'; }
+            }).render('#paypal-button-container');
+            paypalReady = true;
+            status.textContent = '';
+        }
+
+        async function openPaymentModal() {
+            if (!validateReservation()) return;
+            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. Pay the US$50 deposit to submit and secure this reservation.`;
+            document.getElementById('confirmModal').classList.add('active');
+            try { await preparePayPal(); }
+            catch (error) { document.getElementById('paymentStatus').textContent = error.message; }
+        }
+
+        function closePaymentModal() {
+            document.getElementById('confirmModal').classList.remove('active');
         }
     </script>
 </body>
 </html>
+

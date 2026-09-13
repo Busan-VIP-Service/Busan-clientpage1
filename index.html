@@ -40,6 +40,12 @@
         }
         .options-vertical { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
         .option-vertical-item label { padding: 10px 14px; text-align: left; }
+        .payment-note {
+            margin: 9px 0 5px; padding: 11px 12px; border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 8px; background: rgba(212, 175, 55, 0.08); color: #ddd;
+            font-size: 12px; line-height: 1.5;
+        }
+        .payment-note strong { color: #d4af37; }
         input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
             background: #222; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box; outline: none;
@@ -147,13 +153,13 @@
                 <div class="option-vertical-item"><input type="radio" id="v3" name="vibe" value="Ultimate VIP"><label for="v3">Ultimate VIP Experience</label></div>
             </div>
 
-            <label class="section-label">Total Group Budget (USD) <span class="required-star">*</span></label>
+            <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
             <div class="options-vertical">
-                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="500 - 1000"><label for="b1">$500 - $1,000</label></div>
-                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="1000 - 2000"><label for="b2">$1,000 - $2,000</label></div>
-                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="2000 - 3000"><label for="b3">$2,000 - $3,000</label></div>
-                <div class="option-vertical-item"><input type="radio" id="b4" name="budget" value="No limit"><label for="b4">No Limit / Unlimited VIP</label></div>
+                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1">₩600,000 per guest <span class="optional-tag">(approx. US$429)</span></label></div>
+                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2">₩800,000 per guest <span class="optional-tag">(approx. US$571)</span></label></div>
+                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3">₩1,200,000 per guest · High-End VIP <span class="optional-tag">(approx. US$857)</span></label></div>
             </div>
+            <p class="payment-note"><strong>Cash payment required.</strong> Please prepare the selected course amount in Korean won (KRW). USD estimates are calculated at US$1 = ₩1,400 for reference only. Payment is made in cash on the day of your experience.</p>
 
             <label class="section-label">Preferred Guide / Interpreter Type <span class="required-star">*</span></label>
             <div class="options-vertical">

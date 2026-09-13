@@ -1,18 +1,23 @@
 from datetime import date
 from contextlib import closing
+from decimal import Decimal
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Literal
 from urllib.parse import quote
+import hashlib
+import hmac
 import os
 import re
+import secrets
 import sqlite3
 import smtplib
 import ssl
 import logging
+import time
 import uuid
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
@@ -83,6 +88,10 @@ PAYPAL_ENV = os.getenv('PAYPAL_ENV', 'sandbox').lower()
 PAYPAL_API_BASE = 'https://api-m.paypal.com' if PAYPAL_ENV == 'live' else 'https://api-m.sandbox.paypal.com'
 PAYPAL_DEPOSIT_AMOUNT = '50.00'
 PAYPAL_CURRENCY = 'USD'
+ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '')
+ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
+ADMIN_COOKIE = 'busan_admin_session'
+ADMIN_SESSION_SECONDS = 12 * 60 * 60
 
 def connect_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -103,8 +112,32 @@ def connect_db():
     db.execute('''CREATE TABLE IF NOT EXISTS pending_paypal_orders (
         order_id TEXT PRIMARY KEY, reservation_json TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    db.execute('''CREATE TABLE IF NOT EXISTS admin_invoices (
+        invoice_id TEXT PRIMARY KEY, reservation_id INTEGER, customer_name TEXT,
+        customer_email TEXT, course_name TEXT, total_amount TEXT, currency TEXT,
+        payer_url TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     db.commit()
     return db
+
+
+def issue_admin_session() -> str:
+    timestamp = str(int(time.time()))
+    signature = hmac.new(ADMIN_SESSION_SECRET.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
+    return f'{timestamp}.{signature}'
+
+
+def require_admin(request: Request):
+    if not ADMIN_PASSWORD:
+        raise HTTPException(503, 'Admin access is not configured yet.')
+    token = request.cookies.get(ADMIN_COOKIE, '')
+    try:
+        timestamp, signature = token.split('.', 1)
+        valid_age = 0 <= int(time.time()) - int(timestamp) <= ADMIN_SESSION_SECONDS
+        expected = hmac.new(ADMIN_SESSION_SECRET.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
+    except (ValueError, TypeError):
+        raise HTTPException(401, 'Admin login required.')
+    if not valid_age or not secrets.compare_digest(signature, expected):
+        raise HTTPException(401, 'Admin login required.')
 
 def send_telegram_alert(text: str):
     if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == '여기에_텔레그램_봇_토큰_입력':
@@ -130,6 +163,24 @@ class ReservationRequest(BaseModel):
     budget: Literal['600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
+
+
+class AdminLoginRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    password: str = Field(min_length=1, max_length=200)
+
+
+class AdminInvoiceRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    reservationId: int | None = Field(default=None, ge=1)
+    customerName: str = Field(min_length=1, max_length=80)
+    customerEmail: str = Field(default='', max_length=254)
+    courseName: str = Field(min_length=1, max_length=100)
+    courseUsd: Decimal = Field(ge=0, le=100000)
+    interpreterUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
+    additionalUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
+    depositUsd: Decimal = Field(default=Decimal('50'), ge=0, le=100000)
+    note: str = Field(default='', max_length=500)
 
 def paypal_access_token() -> str:
     if not PAYPAL_CLIENT_ID or not PAYPAL_CLIENT_SECRET:
@@ -315,13 +366,150 @@ def create_unpaid_reservation(data: ReservationRequest):
         'whatsapp_url': reservation_whatsapp(data, reservation_id, paid=False),
     }
 
+
+@app.post('/api/admin/login')
+def admin_login(data: AdminLoginRequest, response: Response):
+    if not ADMIN_PASSWORD:
+        raise HTTPException(503, 'Admin access is not configured yet.')
+    if not secrets.compare_digest(data.password, ADMIN_PASSWORD):
+        raise HTTPException(401, 'Incorrect password.')
+    response.set_cookie(
+        ADMIN_COOKIE, issue_admin_session(), max_age=ADMIN_SESSION_SECONDS,
+        httponly=True, secure=True, samesite='strict', path='/'
+    )
+    return {'authenticated': True}
+
+
+@app.get('/api/admin/session')
+def admin_session(request: Request):
+    require_admin(request)
+    return {'authenticated': True}
+
+
+@app.post('/api/admin/logout')
+def admin_logout(request: Request, response: Response):
+    require_admin(request)
+    response.delete_cookie(ADMIN_COOKIE, path='/')
+    return {'authenticated': False}
+
+
+@app.get('/api/admin/reservations')
+def admin_reservations(request: Request):
+    require_admin(request)
+    with closing(connect_db()) as db:
+        rows = db.execute('''SELECT id, name, visit_date, party_size, budget, hotel, phone,
+            payment_status, deposit_amount, deposit_currency, created_at
+            FROM reservations ORDER BY id DESC LIMIT 100''').fetchall()
+    return {'reservations': [dict(row) for row in rows]}
+
+
+@app.post('/api/admin/invoices')
+def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
+    require_admin(request)
+    if data.customerEmail and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', data.customerEmail):
+        raise HTTPException(422, 'Enter a valid customer email or leave it blank.')
+    total = data.courseUsd + data.interpreterUsd + data.additionalUsd - data.depositUsd
+    if total <= 0:
+        raise HTTPException(422, 'The final amount must be greater than zero.')
+    money = lambda value: f'{value.quantize(Decimal("0.01"))}'
+    breakdown = (
+        f'Course: US${money(data.courseUsd)} · Interpreter: US${money(data.interpreterUsd)} · '
+        f'Additional: US${money(data.additionalUsd)} · Deposit credit: -US${money(data.depositUsd)}'
+    )
+    if data.note.strip():
+        breakdown += f' · {data.note.strip()}'
+    recipient = {'billing_info': {'name': {'given_name': data.customerName.strip()[:140]}}}
+    if data.customerEmail:
+        recipient['billing_info']['email_address'] = data.customerEmail.strip()
+    payload = {
+        'detail': {
+            'currency_code': 'USD',
+            'note': breakdown,
+            'payment_term': {'term_type': 'DUE_ON_RECEIPT'},
+        },
+        'invoicer': {'name': {'given_name': 'Midnight Sunrise', 'surname': 'Busan'}},
+        'primary_recipients': [recipient],
+        'items': [{
+            'name': data.courseName.strip(),
+            'description': 'Final agreed balance. Specific venues remain subject to confirmation and availability.',
+            'quantity': '1',
+            'unit_amount': {'currency_code': 'USD', 'value': money(total)},
+        }],
+    }
+    try:
+        with httpx.Client(timeout=25) as client:
+            created = client.post(
+                f'{PAYPAL_API_BASE}/v2/invoicing/invoices',
+                headers=paypal_headers(f'invoice-{uuid.uuid4()}'), json=payload,
+            )
+            created.raise_for_status()
+            created_data = created.json()
+            invoice_id = created_data.get('id', '')
+            if not invoice_id:
+                source = created_data.get('href', '') + ' ' + ' '.join(
+                    link.get('href', '') for link in created_data.get('links', [])
+                )
+                match = re.search(r'INV2-[A-Z0-9-]+', source)
+                invoice_id = match.group(0) if match else ''
+            if not invoice_id:
+                raise ValueError('PayPal did not return an invoice ID')
+            sent = client.post(
+                f'{PAYPAL_API_BASE}/v2/invoicing/invoices/{invoice_id}/send',
+                headers=paypal_headers(f'send-{invoice_id}'),
+                json={'send_to_recipient': bool(data.customerEmail), 'send_to_invoicer': False},
+            )
+            sent.raise_for_status()
+            sent_data = sent.json() if sent.content else {}
+            links = sent_data.get('links', []) if isinstance(sent_data, dict) else []
+            if isinstance(sent_data, dict) and sent_data.get('rel'):
+                links.append(sent_data)
+            payer_url = next((link.get('href', '') for link in links if link.get('rel') == 'payer-view'), '')
+            invoice_detail = client.get(
+                f'{PAYPAL_API_BASE}/v2/invoicing/invoices/{invoice_id}',
+                headers=paypal_headers(),
+            )
+            if invoice_detail.is_success:
+                detail_data = invoice_detail.json()
+                payer_url = payer_url or detail_data.get('detail', {}).get('metadata', {}).get('recipient_view_url', '')
+            qr = client.post(
+                f'{PAYPAL_API_BASE}/v2/invoicing/invoices/{invoice_id}/generate-qr-code',
+                headers=paypal_headers(), json={'width': 320, 'height': 320, 'action': 'pay'},
+            )
+            qr_image = qr.json().get('image', '') if qr.is_success else ''
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning('Admin invoice creation failed (%s).', type(exc).__name__)
+        raise HTTPException(502, 'PayPal could not create this invoice.') from exc
+    with closing(connect_db()) as db, db:
+        db.execute('''INSERT OR REPLACE INTO admin_invoices
+            (invoice_id, reservation_id, customer_name, customer_email, course_name,
+             total_amount, currency, payer_url, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            invoice_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
+            data.courseName.strip(), money(total), 'USD', payer_url, 'unpaid',
+        ))
+    send_telegram_alert(
+        f'[인보이스 발행] {invoice_id}\n고객: {data.customerName}\n'
+        f'코스: {data.courseName}\n최종 청구: US${money(total)}\n{payer_url}'
+    )
+    return {
+        'invoice_id': invoice_id, 'total': money(total), 'currency': 'USD',
+        'payer_url': payer_url, 'qr_image': qr_image,
+    }
+
+
+@app.get('/admin')
+def admin_page():
+    return FileResponse(ROOT / 'admin.html')
+
 @app.get('/')
 def home():
     return FileResponse(ROOT / 'index.html')
 
 @app.get('/{asset}')
 def static_asset(asset: str):
-    allowed = {'index.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml'}
+    allowed = {'index.html', 'admin.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml'}
     if asset not in allowed and not re.fullmatch(r'(?:main|mobile_main|image1 \(\d+\))\.png', asset):
         raise HTTPException(404)
     path = ROOT / asset

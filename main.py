@@ -174,7 +174,7 @@ def send_paid_reservation_alert(data: ReservationRequest, reservation_id: int, c
         f'이름: {data.name}\n'
         f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
         f'코스: {data.budget}\n'
-        f'통역: Fluent English interpreter included\n'
+        f'통역: 전문 영어 통역사 동행 (통역 비용 청구)\n'
         f'호텔: {data.hotel}\n'
         f'연락처: {data.phone}\n'
         f'예약금: US$50 결제 완료\n'
@@ -326,4 +326,3 @@ def static_asset(asset: str):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host=os.getenv('BUSAN_HOST', '127.0.0.1'), port=int(os.getenv('PORT', os.getenv('BUSAN_PHONE_PORT', '8001'))))
-

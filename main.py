@@ -40,7 +40,7 @@ EMAIL_ALERT_ENABLED = os.getenv('EMAIL_ALERT_ENABLED', 'false').lower() in {'1',
 EMAIL_ALERT_TO = os.getenv('EMAIL_ALERT_TO', 'jwh2394@naver.com')
 
 
-def send_email_alert(text: str, reservation_id: int):
+def send_email_alert(text: str, reservation_id: int, subject: str):
     if not EMAIL_ALERT_ENABLED:
         return
     try:
@@ -52,7 +52,7 @@ def send_email_alert(text: str, reservation_id: int):
             logger.warning('Email alert skipped: SMTP configuration is incomplete.')
             return
         message = EmailMessage()
-        message['Subject'] = f'Busan VIP booking request #{reservation_id}'
+        message['Subject'] = f'{subject} #{reservation_id}'
         message['From'] = sender
         message['To'] = EMAIL_ALERT_TO
         message.set_content(text)
@@ -163,25 +163,29 @@ def reservation_whatsapp(data: ReservationRequest, reservation_id: int, paid: bo
     concierge_whatsapp = os.getenv('BUSAN_WHATSAPP_NUMBER', '').lstrip('+')
     if not re.fullmatch(r'[1-9][0-9]{7,14}', concierge_whatsapp):
         return None
-    payment_note = 'My US$50 deposit is paid.' if paid else 'I would like to continue without prepayment.'
-    message = f'Hello, {payment_note} Request #{reservation_id}. Name: {data.name}, Date: {data.visitDate}.'
+    if paid:
+        message = f'Hello, my US$50 deposit is paid. Confirmed reservation #{reservation_id}. Name: {data.name}, Date: {data.visitDate}.'
+    else:
+        message = f'Hello, I would like a free consultation before booking. WhatsApp inquiry #{reservation_id}. Name: {data.name}, Date: {data.visitDate}.'
     return f'https://wa.me/{concierge_whatsapp}?text={quote(message)}'
 
 
 def send_paid_reservation_alert(data: ReservationRequest, reservation_id: int, capture_id: str):
     text = (
-        f'[PAID] VIP 예약 #{reservation_id}\n'
+        f'[결제 완료 · 예약 확정] VIP 예약 #{reservation_id}\n'
         f'이름: {data.name}\n'
         f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
         f'코스: {data.budget}\n'
-        f'통역: 전문 영어 통역사 동행 (통역 비용 청구)\n'
+        f'요청 유형: US$50 결제 / 예약 진행\n'
+        f'통역: 전문 영어 통역사 배정 (비용 별도)\n'
         f'호텔: {data.hotel}\n'
         f'연락처: {data.phone}\n'
-        f'예약금: US$50 결제 완료\n'
+        f'상태: 예약 확정 · 장소 및 통역 배정 시작\n'
+        f'후속 조치: 예약 진행 및 WhatsApp 응대\n'
         f'PayPal: {capture_id}'
     )
     send_telegram_alert(text)
-    send_email_alert(text, reservation_id)
+    send_email_alert(text, reservation_id, '[결제 완료] VIP 예약 확정')
 
 
 @app.get('/api/paypal/config')
@@ -293,17 +297,19 @@ def create_unpaid_reservation(data: ReservationRequest):
         ))
         reservation_id = cursor.lastrowid
     text = (
-        f'[NOT PAID] VIP 문의 #{reservation_id}\n'
+        f'[무료 상담 요청] WhatsApp 문의 #{reservation_id}\n'
         f'이름: {data.name}\n'
         f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
         f'코스: {data.budget}\n'
-        f'통역/예약: 선결제 후 진행\n'
+        f'요청 유형: WhatsApp 무료 상담\n'
+        f'통역: 비용 별도 · 결제 후 배정\n'
         f'호텔: {data.hotel}\n'
         f'연락처: {data.phone}\n'
-        f'상태: WhatsApp 상담 / 예약 미확정'
+        f'상태: 결제 전 · 예약 미확정\n'
+        f'후속 조치: WhatsApp으로 상담 진행'
     )
     send_telegram_alert(text)
-    send_email_alert(text, reservation_id)
+    send_email_alert(text, reservation_id, '[무료 상담] WhatsApp 문의')
     return {
         'status': 'success', 'reservation_id': reservation_id, 'payment_status': 'unpaid',
         'whatsapp_url': reservation_whatsapp(data, reservation_id, paid=False),
@@ -326,3 +332,4 @@ def static_asset(asset: str):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host=os.getenv('BUSAN_HOST', '127.0.0.1'), port=int(os.getenv('PORT', os.getenv('BUSAN_PHONE_PORT', '8001'))))
+

@@ -46,6 +46,10 @@
             font-size: 12px; line-height: 1.5;
         }
         .payment-note strong { color: #d4af37; }
+        .usd-price {
+            display: inline-block; margin-left: 7px; color: #f1d675;
+            font-size: 13px; font-weight: 800; letter-spacing: 0.2px;
+        }
         input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
             background: #222; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; box-sizing: border-box; outline: none;
@@ -155,11 +159,11 @@
 
             <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
             <div class="options-vertical">
-                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1">₩600,000 per guest <span class="optional-tag">(approx. US$429)</span></label></div>
-                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2">₩800,000 per guest <span class="optional-tag">(approx. US$571)</span></label></div>
-                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3">₩1,200,000 per guest · High-End VIP <span class="optional-tag">(approx. US$857)</span></label></div>
+                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1">₩600,000 per guest <span class="usd-price">≈ US$430</span></label></div>
+                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2">₩800,000 per guest <span class="usd-price">≈ US$570</span></label></div>
+                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3">₩1,200,000 per guest · High-End VIP <span class="usd-price">≈ US$860</span></label></div>
             </div>
-            <p class="payment-note"><strong>Cash payment required.</strong> Please prepare the selected course amount in Korean won (KRW). USD estimates are calculated at US$1 = ₩1,400 for reference only. Payment is made in cash on the day of your experience.</p>
+            <p class="payment-note"><strong>Cash payment required.</strong> Please prepare the selected course amount in Korean won (KRW). Payment is made in cash on the day of your experience.</p>
 
             <label class="section-label">Preferred Guide / Interpreter Type <span class="required-star">*</span></label>
             <div class="options-vertical">

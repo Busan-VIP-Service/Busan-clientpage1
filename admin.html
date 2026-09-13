@@ -39,7 +39,7 @@
           <label class="field"><span>Invoice title</span><input id="courseName" value="Custom arrangement"></label>
           <div class="amounts">
             <label class="field"><span>Course · USD</span><input id="courseUsd" type="number" min="0" step="0.01" value="0"></label>
-            <label class="field"><span>Interpreter · USD</span><input id="interpreterUsd" type="number" min="0" step="0.01" value="0"></label>
+            <label class="field"><span>Interpreter · USD</span><input id="interpreterUsd" type="number" min="0" step="0.01" value="250"></label>
             <label class="field"><span>Additional · USD</span><input id="additionalUsd" type="number" min="0" step="0.01" value="0"></label>
             <label class="field"><span>Deposit credit · USD</span><input id="depositUsd" type="number" min="0" step="0.01" value="50"></label>
           </div>
@@ -57,7 +57,7 @@
     async function loadReservations(){const data=await api('/api/admin/reservations');reservations=data.reservations;$('reservations').replaceChildren(...(reservations.length?reservations.map(renderReservation):[Object.assign(document.createElement('p'),{className:'muted',textContent:'No saved reservations yet.'})]))}
     function renderReservation(r){const b=document.createElement('button');b.className='reservation';b.innerHTML=`<strong>#${r.id} · ${escapeHtml(r.name)}</strong><span>${escapeHtml(r.visit_date)} · ${escapeHtml(r.party_size)} guests · ${escapeHtml(r.budget)}</span><span>${escapeHtml(r.payment_status||'unpaid')} · ${escapeHtml(r.hotel)}</span>`;b.onclick=()=>selectReservation(r,b);return b}
     function escapeHtml(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
-    function selectReservation(r,button){selectedReservation=r;document.querySelectorAll('.reservation').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('customerName').value=r.name;const course=document.querySelector(`[data-course^="₩${Number((r.budget||'').replace(/\D/g,''))?.toLocaleString('en-US')}"]`);if(course)course.click();$('depositUsd').value=r.payment_status==='paid'?(r.deposit_amount||50):0;updateTotal()}
+    function selectReservation(r,button){selectedReservation=r;document.querySelectorAll('.reservation').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('customerName').value=r.name;const course=document.querySelector(`[data-course^="₩${Number((r.budget||'').replace(/\D/g,''))?.toLocaleString('en-US')}"]`);if(course){course.click();const guests=Number.parseInt(r.party_size,10)||1;$('courseUsd').value=(Number(course.dataset.usd)*guests).toFixed(2)}$('depositUsd').value=r.payment_status==='paid'?(r.deposit_amount||50):0;updateTotal()}
     function updateTotal(){const value=id=>Number($(id).value)||0;$('total').textContent='US$'+Math.max(0,value('courseUsd')+value('interpreterUsd')+value('additionalUsd')-value('depositUsd')).toFixed(2)}
     document.querySelectorAll('#courseButtons button').forEach(button=>button.onclick=()=>{document.querySelectorAll('#courseButtons button').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('courseName').value=button.dataset.course;$('courseUsd').value=button.dataset.usd;updateTotal()});
     ['courseUsd','interpreterUsd','additionalUsd','depositUsd'].forEach(id=>$(id).addEventListener('input',updateTotal));

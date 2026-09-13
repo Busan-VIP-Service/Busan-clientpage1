@@ -126,6 +126,19 @@
         .modal-title { font-size: 18px; color: #d4af37; font-weight: bold; margin-bottom: 10px; }
         .modal-desc { font-size: 14px; color: #bbb; margin-bottom: 25px; line-height: 1.5; }
         .modal-btn { background: #d4af37; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
+        .consult-modal-box {
+            position: relative; overflow: hidden; background: radial-gradient(circle at 50% 0, rgba(46, 180, 91, .18), transparent 42%), #171b18;
+            border-color: rgba(75, 197, 115, .38); box-shadow: 0 28px 70px rgba(0, 0, 0, .72), 0 0 32px rgba(37, 211, 102, .08);
+        }
+        .consult-modal-box::before { content: ''; position: absolute; inset: 0 18% auto; height: 1px; background: linear-gradient(90deg, transparent, #75e69e, transparent); }
+        .consult-icon { width: 48px; height: 48px; margin: 0 auto 18px; display: grid; place-items: center; border-radius: 50%; background: #23894c; color: #fff; box-shadow: 0 0 24px rgba(37, 211, 102, .25); }
+        .consult-icon svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .consult-modal-box .modal-title { color: #f2eee5; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 24px; font-weight: 500; }
+        .consult-copy { margin: 12px 0 22px; color: #b7beb8; font-size: 13px; line-height: 1.7; }
+        .consult-copy strong { display: block; color: #dff5e6; font-size: 15px; font-weight: 600; }
+        .consult-action { width: 100%; border: 1px solid #47bc70; border-radius: 7px; padding: 14px; background: linear-gradient(135deg, #2aa75b, #207c45); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(37, 211, 102, .16); }
+        .consult-action:hover { background: linear-gradient(135deg, #31b965, #24894c); }
+        .consult-status { min-height: 18px; margin-top: 10px; color: #9fcaaa; font-size: 11px; line-height: 1.4; }
         .required-star { color: #ff4d4d; font-weight: bold; }
         .slider-arrow {
             position: absolute; z-index: 11; border: 1px solid #ffffff66; background: #0009; color: white; cursor: pointer; border-radius: 24px;
@@ -329,6 +342,19 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="whatsappModal" role="dialog" aria-modal="true" aria-labelledby="whatsappModalTitle">
+        <div class="modal-box consult-modal-box">
+            <div class="consult-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8.5 8L5 21l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg>
+            </div>
+            <div class="modal-title" id="whatsappModalTitle">Chat Before You Book</div>
+            <div class="consult-copy"><strong>WhatsApp consultation is free.</strong><span>Pay the US$50 deposit when you're ready to confirm.</span></div>
+            <button class="consult-action" id="consultContinue" type="button" onclick="submitWhatsAppInquiry()">Continue to WhatsApp →</button>
+            <div class="consult-status" id="consultStatus"></div>
+            <button class="modal-cancel" type="button" onclick="closeWhatsAppModal()">Back</button>
+        </div>
+    </div>
+
     <script>
         let currentIndex = 0;
         const track = document.getElementById('slidesTrack');
@@ -481,11 +507,19 @@
             catch (error) { document.getElementById('paymentStatus').textContent = error.message; }
         }
 
-        async function continueWithoutPayment() {
+        function continueWithoutPayment() {
             if (!validateReservation()) return;
-            if (!confirm('Continue with a WhatsApp inquiry only? No interpreter assignment or venue reservation will begin until the prepayment is received.')) return;
+            document.getElementById('consultStatus').textContent = '';
+            document.getElementById('whatsappModal').classList.add('active');
+        }
+
+        async function submitWhatsAppInquiry() {
             const buttons = document.querySelectorAll('#formContent button');
+            const action = document.getElementById('consultContinue');
+            const status = document.getElementById('consultStatus');
             buttons.forEach(button => button.disabled = true);
+            action.disabled = true;
+            status.textContent = 'Preparing your WhatsApp consultation…';
             try {
                 const result = await apiJson('/api/reservation', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' },
@@ -495,13 +529,18 @@
                 if (result.whatsapp_url) {
                     window.location.href = result.whatsapp_url;
                 } else {
-                    alert('Your unpaid request was submitted. The concierge will contact you shortly.');
-                    location.reload();
+                    status.textContent = 'Request received. Your concierge will contact you shortly.';
+                    setTimeout(() => location.reload(), 1200);
                 }
             } catch (error) {
-                alert(error.message || 'Unable to submit your request. Please try again.');
+                status.textContent = error.message || 'Unable to continue. Please try again.';
                 buttons.forEach(button => button.disabled = false);
+                action.disabled = false;
             }
+        }
+
+        function closeWhatsAppModal() {
+            document.getElementById('whatsappModal').classList.remove('active');
         }
 
         function closePaymentModal() {

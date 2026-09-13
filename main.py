@@ -128,7 +128,6 @@ class ReservationRequest(BaseModel):
     visitDate: date
     partySize: str = Field(pattern=r'^(?:[1-4]|5\+)$')
     budget: Literal['600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
-    guideType: Literal['Professional Interpreter','Basic Guide']
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
 
@@ -175,7 +174,7 @@ def send_paid_reservation_alert(data: ReservationRequest, reservation_id: int, c
         f'이름: {data.name}\n'
         f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
         f'코스: {data.budget}\n'
-        f'통역: {data.guideType}\n'
+        f'통역: Fluent English interpreter included\n'
         f'호텔: {data.hotel}\n'
         f'연락처: {data.phone}\n'
         f'예약금: US$50 결제 완료\n'
@@ -268,7 +267,7 @@ def capture_paypal_order(order_id: str):
              paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency, payment_status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
-            'Private VIP', data.budget, data.guideType, data.hotel.strip(), data.phone.strip(),
+            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(),
             order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY, 'paid',
         ))
         reservation_id = cursor.lastrowid
@@ -290,7 +289,7 @@ def create_unpaid_reservation(data: ReservationRequest):
              payment_status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
-            'Private VIP', data.budget, data.guideType, data.hotel.strip(), data.phone.strip(), 'unpaid',
+            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'unpaid',
         ))
         reservation_id = cursor.lastrowid
     text = (
@@ -298,7 +297,7 @@ def create_unpaid_reservation(data: ReservationRequest):
         f'이름: {data.name}\n'
         f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
         f'코스: {data.budget}\n'
-        f'통역: {data.guideType}\n'
+        f'통역/예약: 선결제 후 진행\n'
         f'호텔: {data.hotel}\n'
         f'연락처: {data.phone}\n'
         f'상태: WhatsApp 상담 / 예약 미확정'

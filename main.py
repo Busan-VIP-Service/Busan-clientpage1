@@ -176,7 +176,6 @@ class AdminInvoiceRequest(BaseModel):
     customerName: str = Field(min_length=1, max_length=80)
     customerEmail: str = Field(default='', max_length=254)
     courseName: str = Field(min_length=1, max_length=100)
-    courseUsd: Decimal = Field(ge=0, le=100000)
     interpreterUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
     additionalUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
     depositUsd: Decimal = Field(default=Decimal('50'), ge=0, le=100000)
@@ -408,13 +407,14 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     require_admin(request)
     if data.customerEmail and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', data.customerEmail):
         raise HTTPException(422, 'Enter a valid customer email or leave it blank.')
-    total = data.courseUsd + data.interpreterUsd + data.additionalUsd - data.depositUsd
+    total = data.interpreterUsd + data.additionalUsd - data.depositUsd
     if total <= 0:
         raise HTTPException(422, 'The final amount must be greater than zero.')
     money = lambda value: f'{value.quantize(Decimal("0.01"))}'
     breakdown = (
-        f'Course: US${money(data.courseUsd)} · Interpreter: US${money(data.interpreterUsd)} · '
-        f'Additional: US${money(data.additionalUsd)} · Deposit credit: -US${money(data.depositUsd)}'
+        f'Interpreter service: US${money(data.interpreterUsd)} · '
+        f'Other service adjustment: US${money(data.additionalUsd)} · '
+        f'Deposit credit: -US${money(data.depositUsd)} · Venue charges are separate.'
     )
     if data.note.strip():
         breakdown += f' · {data.note.strip()}'
@@ -430,8 +430,8 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
         'invoicer': {'name': {'given_name': 'Midnight Sunrise', 'surname': 'Busan'}},
         'primary_recipients': [recipient],
         'items': [{
-            'name': data.courseName.strip(),
-            'description': 'Final agreed balance. Specific venues remain subject to confirmation and availability.',
+            'name': 'Interpreter service balance',
+            'description': f'{data.courseName.strip()} reference. Venue charges are separate.',
             'quantity': '1',
             'unit_amount': {'currency_code': 'USD', 'value': money(total)},
         }],

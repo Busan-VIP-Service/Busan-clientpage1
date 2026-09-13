@@ -335,7 +335,7 @@
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title">Secure Your Reservation</div>
-            <div class="modal-desc" id="confirmText">Complete the US$50 deposit to submit your reservation.</div>
+            <div class="modal-desc" id="confirmText">Your deposit secures the reservation and starts the arrangements.</div>
             <div id="paypal-button-container"></div>
             <div class="payment-status" id="paymentStatus"></div>
             <button class="modal-cancel" type="button" onclick="closePaymentModal()">Back to form</button>
@@ -501,7 +501,7 @@
 
         async function openPaymentModal() {
             if (!validateReservation()) return;
-            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. Pay the US$50 deposit to submit and secure this reservation.`;
+            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. Your deposit secures the reservation and starts the arrangements.`;
             document.getElementById('confirmModal').classList.add('active');
             try { await preparePayPal(); }
             catch (error) { document.getElementById('paymentStatus').textContent = error.message; }
@@ -549,3 +549,4 @@
     </script>
 </body>
 </html>
+

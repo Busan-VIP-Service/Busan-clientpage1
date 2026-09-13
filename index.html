@@ -107,6 +107,61 @@
             .mobile-only-slide { display: block !important; }
             .pc-only-slide { display: none !important; }
         }
+
+        /* Reservation console */
+        .content { background: #171918; color: #eeeae2; user-select: text; padding: 36px 28px; }
+        .booking-shell { width: 100%; max-width: 480px; margin: 0 auto; }
+        .booking-header { padding-bottom: 28px; }
+        .eyebrow { color: #b5a681; font-size: 10px; font-weight: 600; letter-spacing: 2px; margin-bottom: 14px; }
+        .booking-header h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(27px, 2.5vw, 36px); letter-spacing: -.7px; line-height: 1.2; color: #f4f0e8; }
+        .booking-header p { margin: 10px 0 0; font-size: 13px; color: #a4aaa5; line-height: 1.5; }
+        .form-section { border-top: 1px solid #343935; padding: 24px 0; }
+        .form-section h3 { margin: 0 0 18px; font-size: 15px; font-weight: 600; }
+        .form-section h3 > span { color: #b5a681; font-size: 10px; letter-spacing: 1px; margin-right: 12px; vertical-align: middle; }
+        .content .section-label { color: #bdc2bc; font-size: 12px; letter-spacing: 0; text-transform: none; margin: 14px 0 7px; }
+        .visit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: end; }
+        .content fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+        .content legend { width: 100%; }
+        .field-hint { float: right; color: #919991; font-size: 11px; font-weight: 400; }
+        .content input[type="text"], .content input[type="date"], .content select { height: 46px; margin: 0; border-radius: 6px; background: #1e221f; border-color: #3d443e; color: #f0f0e9; font-size: 14px; color-scheme: dark; }
+        .content input::placeholder { color: #818b82; }
+        .content input:focus, .content select:focus { border-color: #c1af82; }
+        .content .options-group { gap: 5px; margin: 0; flex-wrap: nowrap; }
+        .content .option-item { min-width: 0; position: relative; }
+        .content .option-item label { padding: 0; height: 46px; display: grid; place-items: center; }
+        .content .option-item label, .content .option-vertical-item label { background: #1e221f; border-color: #3d443e; border-radius: 6px; color: #d5d9d2; font-weight: 400; }
+        .content .options-vertical { gap: 8px; margin: 0; }
+        .content .option-vertical-item { position: relative; }
+        .content .option-vertical-item label { display: flex; align-items: center; gap: 14px; padding: 14px; min-height: 55px; }
+        .course-price { font-size: 16px; font-weight: 600; }
+        .course-price small { display: block; margin-top: 4px; font-size: 10px; color: #b8aa86; font-weight: 400; }
+        .content .usd-price { margin-left: auto; font-size: 12px; font-weight: 400; color: #a4ada4; white-space: nowrap; }
+        .choice-dot { width: 15px; height: 15px; border: 1px solid #657064; border-radius: 50%; flex-shrink: 0; }
+        .content input[type="radio"]:checked + label { border-color: #c1af82; background: #2b2d24; color: #f3e5c3; }
+        .content input[type="radio"]:checked + label .choice-dot { border: 4px solid #c1af82; background: #25291f; }
+        .content input[type="radio"] { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }
+        .content input[type="radio"]:focus-visible + label, .content button:focus-visible, .content summary:focus-visible { outline: 2px solid #dbc896; outline-offset: 3px; }
+        .service-note { margin: 12px 0 0; color: #a4ada4; font-size: 12px; line-height: 1.6; }
+        .service-note span { color: #c5b58c; }
+        .content .contact-group { margin: 0; }
+        .content .contact-group select { flex: 0 0 100px; min-width: 0; }
+        .content .contact-group input { flex: 1; min-width: 0; }
+        .business-details { margin-top: 18px; }
+        .business-details summary { cursor: pointer; color: #a4ada4; font-size: 12px; padding: 4px 0; }
+        .business-details summary span { margin-left: 8px; color: #858f85; font-size: 11px; }
+        .booking-checkout { border-top: 1px solid #343935; padding-top: 24px; }
+        .deposit-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 14px; }
+        .deposit-row strong { font-size: 23px; font-weight: 500; color: #e5d5b0; }
+        .deposit-caption { margin: 6px 0 16px; color: #a4ada4; font-size: 12px; line-height: 1.5; }
+        .booking-terms { border-left: 2px solid #555c4c; padding-left: 12px; }
+        .booking-terms p { margin: 5px 0; color: #a4ada4; font-size: 11px; line-height: 1.6; }
+        .content button.submit-btn { display: flex; justify-content: space-between; align-items: center; background: #d1bc8e; color: #1a2019; border-radius: 6px; margin: 20px 0 10px; padding: 15px 17px; font-size: 14px; font-weight: 600; }
+        .content button.submit-btn:hover { background: #dfcda5; }
+        .content button.whatsapp-btn { border: 1px solid #3d4d40; border-radius: 6px; color: #b9cdbd; padding: 13px 8px; margin: 0; font-size: 13px; font-weight: 500; }
+        .content button.whatsapp-btn span { display: block; font-size: 10px; color: #94a496; font-weight: 400; margin-top: 4px; }
+        .content button.whatsapp-btn:hover { background: #202a22; }
+        @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) { .content { padding: 42px 32px; } }
+        @media (max-width: 380px) { .content { padding: 28px 18px; } .visit-grid { grid-template-columns: 1fr; gap: 0; } }
     </style>
     <script src="api-config.js"></script>
     <script src="booking-api.js"></script>
@@ -138,53 +193,44 @@
         </div>
 
         <div class="content" id="formContent">
-            <h2>Plan Your Night</h2>
-            <div class="subtitle">Exclusive VIP Package</div>
-            <p style="font-size: 12px; color: #888; margin-bottom: 10px;"><span class="required-star">*</span> Required fields</p>
+            <div class="booking-shell">
+            <header class="booking-header">
+                <div class="eyebrow">BUSAN PRIVATE CONCIERGE</div>
+                <h2>Your evening, arranged.</h2>
+                <p>A few details. A personal experience.</p>
+            </header>
 
-            <label class="section-label">Your Name <span class="required-star">*</span></label>
-            <input type="text" id="nameInput" placeholder="Enter your name">
+            <section class="form-section" aria-labelledby="visitHeading">
+                <h3 id="visitHeading"><span>01</span> Your visit</h3>
+                <div class="visit-grid">
+                    <div><label class="section-label" for="dateInput">Visit date</label><input type="date" id="dateInput" aria-required="true"></div>
+                    <fieldset class="party-field"><legend class="section-label">Guests</legend><div class="options-group">
+                        <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
+                        <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
+                        <div class="option-item"><input type="radio" id="p3" name="partySize" value="3"><label for="p3">3</label></div>
+                        <div class="option-item"><input type="radio" id="p4" name="partySize" value="4"><label for="p4">4</label></div>
+                        <div class="option-item"><input type="radio" id="p5" name="partySize" value="5+"><label for="p5">5+</label></div>
+                    </div></fieldset>
+                </div>
+                <fieldset class="course-field"><legend class="section-label">Your course <span class="field-hint">KRW / guest</span></legend>
+                    <div class="options-vertical">
+                        <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1"><span class="course-price">₩600,000</span><span class="usd-price">≈ US$430</span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2"><span class="course-price">₩800,000</span><span class="usd-price">≈ US$570</span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3"><span class="course-price">₩1,200,000<small>High-End VIP</small></span><span class="usd-price">≈ US$860</span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                    </div>
+                </fieldset>
+                <p class="service-note">Professional English interpreter accompanies your group. <span>Interpretation fees apply.</span></p>
+            </section>
 
-            <label class="section-label">Company Name <span class="optional-tag">(Optional)</span></label>
-            <input type="text" id="companyInput" placeholder="Enter your company name">
-
-            <label class="section-label">Job Title / Position <span class="optional-tag">(Optional)</span></label>
-            <input type="text" id="titleInput" placeholder="e.g., Director, Manager, CEO">
-
-            <label class="section-label">Visit Date (Schedule) <span class="required-star">*</span></label>
-            <input type="date" id="dateInput">
-
-            <label class="section-label">Party Size <span class="required-star">*</span></label>
-            <div class="options-group">
-                <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
-                <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
-                <div class="option-item"><input type="radio" id="p3" name="partySize" value="3"><label for="p3">3</label></div>
-                <div class="option-item"><input type="radio" id="p4" name="partySize" value="4"><label for="p4">4</label></div>
-                <div class="option-item" style="flex: 1.5;"><input type="radio" id="p5" name="partySize" value="5+"><label for="p5">5+</label></div>
-            </div>
-
-            <div class="deposit-card">
-                <strong>Secure Your Booking with a US$50 Deposit</strong>
-                <p>Pay the deposit to prevent no-shows and begin advance arrangements. It will be credited toward your final booking amount. WhatsApp consultation is available without payment, but no interpreter assignment or venue reservation begins until the prepayment is received.</p>
-            </div>
-
-            <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
-            <div class="options-vertical">
-                <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1">₩600,000 per guest <span class="usd-price">≈ US$430</span></label></div>
-                <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2">₩800,000 per guest <span class="usd-price">≈ US$570</span></label></div>
-                <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3">₩1,200,000 per guest · High-End VIP <span class="usd-price">≈ US$860</span></label></div>
-            </div>
-            <p class="payment-note"><strong>Cash payment required.</strong> Please prepare the selected course amount in Korean won (KRW). Payment is made in cash on the day of your experience.</p>
-
-            <p class="payment-note"><strong>Fluent English Interpreter Included.</strong> A highly fluent English-speaking interpreter will accompany your group. Interpreter assignment, venue reservations and other advance arrangements begin after the required prepayment is received.</p>
-
-            <label class="section-label">Hotel Name <span class="required-star">*</span></label>
-            <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
-
-            <!-- 인증 없이 바로 입력받는 왓츠앱 / 연락처 입력창 -->
-            <label class="section-label">WhatsApp / Contact Number <span class="required-star">*</span></label>
-            <div class="contact-group">
-                <select id="countryCode">
+            <section class="form-section" aria-labelledby="detailsHeading">
+                <h3 id="detailsHeading"><span>02</span> Your details</h3>
+                <label class="section-label" for="nameInput">Full name</label>
+                <input type="text" id="nameInput" autocomplete="name" placeholder="Your name" aria-required="true">
+                <label class="section-label" for="hotelInput">Hotel</label>
+                <input type="text" id="hotelInput" placeholder="e.g. Signiel Busan" aria-required="true">
+                <label class="section-label" for="contactInput">WhatsApp / contact number</label>
+                <div class="contact-group">
+                    <select id="countryCode" aria-label="Country calling code">
                     <option value="+1">🇺🇸 +1</option>
                     <option value="+61">🇦🇺 +61</option>
                     <option value="+82" selected>🇰🇷 +82</option>
@@ -192,12 +238,29 @@
                     <option value="+86">🇨🇳 +86</option>
                     <option value="+44">🇬🇧 +44</option>
                     <option value="+OTHER">🌐 Other</option>
-                </select>
-                <input type="text" id="contactInput" placeholder="Phone Number (e.g. 01012345678)">
-            </div>
+                    </select>
+                    <input type="text" id="contactInput" autocomplete="tel-national" inputmode="tel" placeholder="Phone number" aria-required="true">
+                </div>
+                <details class="business-details">
+                    <summary>Business details <span>Optional</span></summary>
+                    <label class="section-label" for="companyInput">Company</label>
+                    <input type="text" id="companyInput" autocomplete="organization" placeholder="Company name">
+                    <label class="section-label" for="titleInput">Job title</label>
+                    <input type="text" id="titleInput" autocomplete="organization-title" placeholder="Job title">
+                </details>
+            </section>
 
-            <button class="submit-btn" onclick="openPaymentModal()">Continue to US$50 Deposit</button>
-            <button class="whatsapp-btn" onclick="continueWithoutPayment()">Continue Without Payment via WhatsApp</button>
+            <section class="booking-checkout" aria-label="Booking and payment">
+                <div class="deposit-row"><span>Reservation deposit</span><strong>US$50</strong></div>
+                <p class="deposit-caption">Credited toward your final booking amount.</p>
+                <div class="booking-terms">
+                    <p>Course payment: cash in KRW on the day.</p>
+                    <p>Interpreter &amp; venue arrangements begin after deposit payment.</p>
+                </div>
+                <button type="button" class="submit-btn" onclick="openPaymentModal()">Continue to deposit <span aria-hidden="true">→</span></button>
+                <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">Inquire via WhatsApp <span>No payment required</span></button>
+            </section>
+            </div>
         </div>
     </div>
 
@@ -393,4 +456,3 @@
     </script>
 </body>
 </html>
-

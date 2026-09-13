@@ -113,7 +113,15 @@
         .booking-shell { width: 100%; max-width: 480px; margin: 0 auto; }
         .booking-header { padding-bottom: 28px; }
         .eyebrow { color: #b5a681; font-size: 10px; font-weight: 600; letter-spacing: 2px; margin-bottom: 14px; }
-        .booking-header h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(27px, 2.5vw, 36px); letter-spacing: -.7px; line-height: 1.2; color: #f4f0e8; }
+        .booking-header h2 {
+            margin: 0; font-family: Didot, 'Bodoni MT', 'Times New Roman', serif;
+            font-weight: 500; font-size: clamp(31px, 3vw, 43px); letter-spacing: -.8px; line-height: 1.08;
+            color: #d8bc70; background: linear-gradient(105deg, #8f6b24 0%, #d2ad56 28%, #fff2ad 46%, #bd8f31 62%, #f4d77d 82%, #9d7427 100%);
+            background-size: 220% auto; -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; text-shadow: 0 1px 18px rgba(207, 166, 64, .13);
+            animation: goldShimmer 5.5s ease-in-out infinite;
+        }
+        @keyframes goldShimmer { 0%, 18% { background-position: 100% center; } 58%, 100% { background-position: 0 center; } }
         .booking-header p { margin: 10px 0 0; font-size: 13px; color: #a4aaa5; line-height: 1.5; }
         .form-section { border-top: 1px solid #343935; padding: 24px 0; }
         .form-section h3 { margin: 0 0 18px; font-size: 15px; font-weight: 600; }
@@ -162,6 +170,7 @@
         .content button.whatsapp-btn:hover { background: #202a22; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) { .content { padding: 42px 32px; } }
         @media (max-width: 380px) { .content { padding: 28px 18px; } .visit-grid { grid-template-columns: 1fr; gap: 0; } }
+        @media (prefers-reduced-motion: reduce) { .booking-header h2 { animation: none; } }
     </style>
     <script src="api-config.js"></script>
     <script src="booking-api.js"></script>
@@ -196,8 +205,8 @@
             <div class="booking-shell">
             <header class="booking-header">
                 <div class="eyebrow">BUSAN PRIVATE CONCIERGE</div>
-                <h2>VIP Reservation</h2>
-                <p>Private VIP booking &amp; concierge</p>
+                <h2>Make Busan Yours Tonight.</h2>
+                <p>Private VIP experiences, curated around you.</p>
             </header>
 
             <section class="form-section" aria-labelledby="visitHeading">

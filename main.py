@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from contextlib import closing
 from decimal import Decimal
 from email.message import EmailMessage
@@ -177,6 +177,8 @@ class AdminInvoiceRequest(BaseModel):
     customerName: str = Field(min_length=1, max_length=80)
     customerEmail: str = Field(default='', max_length=254)
     courseName: str = Field(min_length=1, max_length=100)
+    courseUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
+    guestCount: int = Field(default=1, ge=1, le=30)
     interpreterUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
     additionalUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
     depositUsd: Decimal = Field(default=Decimal('50'), ge=0, le=100000)
@@ -416,34 +418,59 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     require_admin(request)
     if data.customerEmail and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', data.customerEmail):
         raise HTTPException(422, 'Enter a valid customer email or leave it blank.')
-    total = data.interpreterUsd + data.additionalUsd - data.depositUsd
+    course_total = data.courseUsd * data.guestCount
+    total = course_total + data.interpreterUsd + data.additionalUsd - data.depositUsd
     if total <= 0:
         raise HTTPException(422, 'The final amount must be greater than zero.')
     money = lambda value: f'{value.quantize(Decimal("0.01"))}'
     breakdown = (
+        f'Course: US${money(data.courseUsd)} × {data.guestCount} guest(s) · '
         f'Interpreter service: US${money(data.interpreterUsd)} · '
         f'Other service adjustment: US${money(data.additionalUsd)} · '
-        f'Deposit credit: -US${money(data.depositUsd)} · Venue charges are separate.'
+        f'Deposit credit: -US${money(data.depositUsd)} · Course and interpreter fees are itemized separately.'
     )
     if data.note.strip():
         breakdown += f' · {data.note.strip()}'
     recipient = {'billing_info': {'name': {'given_name': data.customerName.strip()[:140]}}}
     if data.customerEmail:
         recipient['billing_info']['email_address'] = data.customerEmail.strip()
+    invoice_number = f'MSB-{datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")}-{uuid.uuid4().hex[:5].upper()}'
+    items = []
+    if data.courseUsd > 0:
+        items.append({
+            'name': data.courseName.strip(),
+            'description': 'Course and venue arrangement',
+            'quantity': str(data.guestCount),
+            'unit_amount': {'currency_code': 'USD', 'value': money(data.courseUsd)},
+            'unit_of_measure': 'QUANTITY',
+        })
+    interpreter_balance = max(Decimal('0'), data.interpreterUsd - data.depositUsd)
+    if interpreter_balance > 0:
+        items.append({
+            'name': 'Interpreter service balance',
+            'description': f'Interpreter service US${money(data.interpreterUsd)} less deposit US${money(data.depositUsd)}',
+            'quantity': '1',
+            'unit_amount': {'currency_code': 'USD', 'value': money(interpreter_balance)},
+            'unit_of_measure': 'QUANTITY',
+        })
+    if data.additionalUsd > 0:
+        items.append({
+            'name': 'Additional agreed service',
+            'quantity': '1',
+            'unit_amount': {'currency_code': 'USD', 'value': money(data.additionalUsd)},
+            'unit_of_measure': 'QUANTITY',
+        })
     payload = {
         'detail': {
+            'invoice_number': invoice_number,
+            'invoice_date': date.today().isoformat(),
             'currency_code': 'USD',
             'note': breakdown,
             'payment_term': {'term_type': 'DUE_ON_RECEIPT'},
         },
         'invoicer': {'name': {'given_name': 'Midnight Sunrise', 'surname': 'Busan'}},
         'primary_recipients': [recipient],
-        'items': [{
-            'name': 'Interpreter service balance',
-            'description': f'{data.courseName.strip()} reference. Venue charges are separate.',
-            'quantity': '1',
-            'unit_amount': {'currency_code': 'USD', 'value': money(total)},
-        }],
+        'items': items,
     }
     try:
         with httpx.Client(timeout=25) as client:
@@ -451,7 +478,11 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
                 f'{PAYPAL_API_BASE}/v2/invoicing/invoices',
                 headers=paypal_headers(f'invoice-{uuid.uuid4()}'), json=payload,
             )
-            created.raise_for_status()
+            if not created.is_success:
+                logger.warning('PayPal create invoice failed: status=%s body=%s', created.status_code, created.text[:1600])
+                if created.status_code == 403:
+                    raise HTTPException(502, 'PayPal Invoicing permission is not enabled for this account.')
+                raise HTTPException(502, 'PayPal rejected the invoice details. Check the customer and amounts.')
             created_data = created.json()
             invoice_id = created_data.get('id', '')
             if not invoice_id:
@@ -467,7 +498,11 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
                 headers=paypal_headers(f'send-{invoice_id}'),
                 json={'send_to_recipient': bool(data.customerEmail), 'send_to_invoicer': False},
             )
-            sent.raise_for_status()
+            if not sent.is_success:
+                logger.warning('PayPal send invoice failed: status=%s body=%s', sent.status_code, sent.text[:1600])
+                if sent.status_code == 403:
+                    raise HTTPException(502, 'PayPal Invoicing permission is not enabled for this account.')
+                raise HTTPException(502, 'PayPal created the draft but could not activate its payment link.')
             sent_data = sent.json() if sent.content else {}
             links = sent_data.get('links', []) if isinstance(sent_data, dict) else []
             if isinstance(sent_data, dict) and sent_data.get('rel'):

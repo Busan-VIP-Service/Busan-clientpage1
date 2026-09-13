@@ -163,14 +163,22 @@
         .deposit-caption { margin: 6px 0 16px; color: #a4ada4; font-size: 12px; line-height: 1.5; }
         .booking-terms { border-left: 2px solid #555c4c; padding-left: 12px; }
         .booking-terms p { margin: 5px 0; color: #a4ada4; font-size: 11px; line-height: 1.6; }
-        .content button.submit-btn { display: flex; justify-content: space-between; align-items: center; background: transparent; color: #d9c493; border: 1px solid #756642; border-radius: 6px; margin: 10px 0 16px; padding: 14px 17px; font-size: 14px; font-weight: 600; }
-        .content button.submit-btn:hover { background: #28271f; border-color: #b29a63; }
+        .content button.submit-btn {
+            display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden;
+            background: linear-gradient(110deg, #936b20 0%, #d6ad4e 28%, #fff0a0 46%, #bd8828 62%, #efd27b 82%, #9c7122 100%);
+            background-size: 240% auto; color: #19150b; border: 1px solid #e1c36f; border-radius: 6px;
+            margin: 10px 0 16px; padding: 15px 17px; font-size: 14px; font-weight: 800;
+            box-shadow: 0 6px 22px rgba(197, 151, 42, .24), inset 0 1px 0 rgba(255, 250, 202, .7);
+            animation: buttonGoldShimmer 4.2s ease-in-out infinite; transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .content button.submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(218, 169, 50, .36), inset 0 1px 0 rgba(255, 250, 202, .85); }
+        @keyframes buttonGoldShimmer { 0%, 20% { background-position: 100% center; } 62%, 100% { background-position: 0 center; } }
         .content button.whatsapp-btn { border: 1px solid #39ad65; border-radius: 6px; background: #23894c; color: #fff; padding: 14px 8px; margin: 18px 0 0; font-size: 14px; font-weight: 600; }
         .content button.whatsapp-btn span { display: block; font-size: 10px; color: #d8f3e2; font-weight: 400; margin-top: 4px; }
         .content button.whatsapp-btn:hover { background: #2a9a57; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) { .content { padding: 42px 32px; } }
         @media (max-width: 380px) { .content { padding: 28px 18px; } .visit-grid { grid-template-columns: 1fr; gap: 0; } }
-        @media (prefers-reduced-motion: reduce) { .booking-header h2 { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .booking-header h2, .content button.submit-btn { animation: none; } }
     </style>
     <script src="api-config.js"></script>
     <script src="booking-api.js"></script>
@@ -262,7 +270,7 @@
             <section class="booking-checkout" aria-label="Booking and payment">
                 <div class="deposit-row"><span>Talk first. Pay when you're ready.</span></div>
                 <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">Chat on WhatsApp <span>Free consultation</span></button>
-                <button type="button" class="submit-btn" onclick="openPaymentModal()">Book Now — US$50 <span aria-hidden="true">→</span></button>
+                <button type="button" class="submit-btn" onclick="openPaymentModal()">Confirm My VIP Experience — US$50 <span aria-hidden="true">→</span></button>
                 <div class="booking-terms">
                     <p>Payment starts venue and interpreter arrangements.</p>
                     <p>US$50 goes toward your final amount.</p>

@@ -158,16 +158,16 @@
         .business-details summary { cursor: pointer; color: #a4ada4; font-size: 12px; padding: 4px 0; }
         .business-details summary span { margin-left: 8px; color: #858f85; font-size: 11px; }
         .booking-checkout { border-top: 1px solid #343935; padding-top: 24px; }
-        .deposit-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 14px; }
+        .deposit-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 16px; font-weight: 600; }
         .deposit-row strong { font-size: 23px; font-weight: 500; color: #e5d5b0; }
         .deposit-caption { margin: 6px 0 16px; color: #a4ada4; font-size: 12px; line-height: 1.5; }
         .booking-terms { border-left: 2px solid #555c4c; padding-left: 12px; }
         .booking-terms p { margin: 5px 0; color: #a4ada4; font-size: 11px; line-height: 1.6; }
-        .content button.submit-btn { display: flex; justify-content: space-between; align-items: center; background: #d1bc8e; color: #1a2019; border-radius: 6px; margin: 20px 0 10px; padding: 15px 17px; font-size: 14px; font-weight: 600; }
-        .content button.submit-btn:hover { background: #dfcda5; }
-        .content button.whatsapp-btn { border: 1px solid #3d4d40; border-radius: 6px; color: #b9cdbd; padding: 13px 8px; margin: 0; font-size: 13px; font-weight: 500; }
-        .content button.whatsapp-btn span { display: block; font-size: 10px; color: #94a496; font-weight: 400; margin-top: 4px; }
-        .content button.whatsapp-btn:hover { background: #202a22; }
+        .content button.submit-btn { display: flex; justify-content: space-between; align-items: center; background: transparent; color: #d9c493; border: 1px solid #756642; border-radius: 6px; margin: 10px 0 16px; padding: 14px 17px; font-size: 14px; font-weight: 600; }
+        .content button.submit-btn:hover { background: #28271f; border-color: #b29a63; }
+        .content button.whatsapp-btn { border: 1px solid #39ad65; border-radius: 6px; background: #23894c; color: #fff; padding: 14px 8px; margin: 18px 0 0; font-size: 14px; font-weight: 600; }
+        .content button.whatsapp-btn span { display: block; font-size: 10px; color: #d8f3e2; font-weight: 400; margin-top: 4px; }
+        .content button.whatsapp-btn:hover { background: #2a9a57; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) { .content { padding: 42px 32px; } }
         @media (max-width: 380px) { .content { padding: 28px 18px; } .visit-grid { grid-template-columns: 1fr; gap: 0; } }
         @media (prefers-reduced-motion: reduce) { .booking-header h2 { animation: none; } }
@@ -260,14 +260,14 @@
             </section>
 
             <section class="booking-checkout" aria-label="Booking and payment">
-                <div class="deposit-row"><span>Confirm Your VIP Experience</span><strong>US$50</strong></div>
-                <p class="deposit-caption">Once payment is confirmed, your dedicated concierge begins arranging your Busan night.</p>
+                <div class="deposit-row"><span>Talk first. Pay when you're ready.</span></div>
+                <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">Chat on WhatsApp <span>Free consultation</span></button>
+                <button type="button" class="submit-btn" onclick="openPaymentModal()">Book Now — US$50 <span aria-hidden="true">→</span></button>
                 <div class="booking-terms">
-                    <p>We begin securing venues and assigning your professional English interpreter.</p>
-                    <p>The US$50 is credited toward your final amount. The remaining balance is paid in cash (KRW) on the day.</p>
+                    <p>Payment starts venue and interpreter arrangements.</p>
+                    <p>US$50 goes toward your final amount.</p>
+                    <p>Balance: cash (KRW) on the day.</p>
                 </div>
-                <button type="button" class="submit-btn" onclick="openPaymentModal()">Start My VIP Arrangement <span aria-hidden="true">→</span></button>
-                <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">WhatsApp Inquiry <span>No payment required</span></button>
             </section>
             </div>
         </div>

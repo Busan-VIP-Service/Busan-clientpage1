@@ -91,7 +91,8 @@ PAYPAL_CURRENCY = 'USD'
 ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '')
 ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 ADMIN_COOKIE = 'busan_admin_session'
-ADMIN_SESSION_SECONDS = 12 * 60 * 60
+ADMIN_SESSION_SECONDS = 30 * 24 * 60 * 60
+ADMIN_LOGIN_ATTEMPTS: dict[str, list[float]] = {}
 
 def connect_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -367,11 +368,19 @@ def create_unpaid_reservation(data: ReservationRequest):
 
 
 @app.post('/api/admin/login')
-def admin_login(data: AdminLoginRequest, response: Response):
+def admin_login(data: AdminLoginRequest, request: Request, response: Response):
     if not ADMIN_PASSWORD:
         raise HTTPException(503, 'Admin access is not configured yet.')
+    address = request.client.host if request.client else 'unknown'
+    now = time.time()
+    attempts = [stamp for stamp in ADMIN_LOGIN_ATTEMPTS.get(address, []) if now - stamp < 600]
+    ADMIN_LOGIN_ATTEMPTS[address] = attempts
+    if len(attempts) >= 5:
+        raise HTTPException(429, 'Too many attempts. Please wait 10 minutes.')
     if not secrets.compare_digest(data.password, ADMIN_PASSWORD):
+        attempts.append(now)
         raise HTTPException(401, 'Incorrect password.')
+    ADMIN_LOGIN_ATTEMPTS.pop(address, None)
     response.set_cookie(
         ADMIN_COOKIE, issue_admin_session(), max_age=ADMIN_SESSION_SECONDS,
         httponly=True, secure=True, samesite='strict', path='/'

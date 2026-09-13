@@ -146,7 +146,7 @@ def paypal_access_token() -> str:
             return response.json()['access_token']
     except Exception as exc:
         logger.warning('PayPal authentication failed (%s).', type(exc).__name__)
-        raise HTTPException(502, 'Unable to connect to PayPal.') from exc
+        raise HTTPException(502, 'PayPal is temporarily unavailable. Please continue on WhatsApp.') from exc
 
 
 def paypal_headers(request_id: str | None = None) -> dict[str, str]:

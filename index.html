@@ -196,15 +196,15 @@
             <div class="booking-shell">
             <header class="booking-header">
                 <div class="eyebrow">BUSAN PRIVATE CONCIERGE</div>
-                <h2>Plan Your Busan Night</h2>
+                <h2>VIP Reservation</h2>
                 <p>Private VIP booking &amp; concierge</p>
             </header>
 
             <section class="form-section" aria-labelledby="visitHeading">
-                <h3 id="visitHeading"><span>01</span> Your visit</h3>
+                <h3 id="visitHeading"><span>01</span> Reservation Details</h3>
                 <div class="visit-grid">
-                    <div><label class="section-label" for="dateInput">Visit date</label><input type="date" id="dateInput" aria-required="true"></div>
-                    <fieldset class="party-field"><legend class="section-label">Guests</legend><div class="options-group">
+                    <div><label class="section-label" for="dateInput">Reservation Date</label><input type="date" id="dateInput" aria-required="true"></div>
+                    <fieldset class="party-field"><legend class="section-label">Number of Guests</legend><div class="options-group">
                         <div class="option-item"><input type="radio" id="p1" name="partySize" value="1"><label for="p1">1</label></div>
                         <div class="option-item"><input type="radio" id="p2" name="partySize" value="2"><label for="p2">2</label></div>
                         <div class="option-item"><input type="radio" id="p3" name="partySize" value="3"><label for="p3">3</label></div>
@@ -212,7 +212,7 @@
                         <div class="option-item"><input type="radio" id="p5" name="partySize" value="5+"><label for="p5">5+</label></div>
                     </div></fieldset>
                 </div>
-                <fieldset class="course-field"><legend class="section-label">Your course <span class="field-hint">KRW / guest</span></legend>
+                <fieldset class="course-field"><legend class="section-label">VIP Course <span class="field-hint">KRW / guest</span></legend>
                     <div class="options-vertical">
                         <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1"><span class="course-price">₩600,000</span><span class="usd-price">≈ US$430</span><span class="choice-dot" aria-hidden="true"></span></label></div>
                         <div class="option-vertical-item"><input type="radio" id="b2" name="budget" value="800000 KRW per guest"><label for="b2"><span class="course-price">₩800,000</span><span class="usd-price">≈ US$570</span><span class="choice-dot" aria-hidden="true"></span></label></div>
@@ -223,12 +223,12 @@
             </section>
 
             <section class="form-section" aria-labelledby="detailsHeading">
-                <h3 id="detailsHeading"><span>02</span> Your details</h3>
-                <label class="section-label" for="nameInput">Full name</label>
-                <input type="text" id="nameInput" autocomplete="name" placeholder="Your name" aria-required="true">
-                <label class="section-label" for="hotelInput">Hotel</label>
+                <h3 id="detailsHeading"><span>02</span> Guest Information</h3>
+                <label class="section-label" for="nameInput">Full Name</label>
+                <input type="text" id="nameInput" autocomplete="name" placeholder="Full name" aria-required="true">
+                <label class="section-label" for="hotelInput">Hotel Name</label>
                 <input type="text" id="hotelInput" placeholder="e.g. Signiel Busan" aria-required="true">
-                <label class="section-label" for="contactInput">WhatsApp / contact number</label>
+                <label class="section-label" for="contactInput">WhatsApp / Contact Number</label>
                 <div class="contact-group">
                     <select id="countryCode" aria-label="Country calling code">
                     <option value="+1">🇺🇸 +1</option>
@@ -242,23 +242,23 @@
                     <input type="text" id="contactInput" autocomplete="tel-national" inputmode="tel" placeholder="Phone number" aria-required="true">
                 </div>
                 <details class="business-details">
-                    <summary>Business details <span>Optional</span></summary>
+                    <summary>Business Information <span>Optional</span></summary>
                     <label class="section-label" for="companyInput">Company</label>
                     <input type="text" id="companyInput" autocomplete="organization" placeholder="Company name">
-                    <label class="section-label" for="titleInput">Job title</label>
+                    <label class="section-label" for="titleInput">Job Title</label>
                     <input type="text" id="titleInput" autocomplete="organization-title" placeholder="Job title">
                 </details>
             </section>
 
             <section class="booking-checkout" aria-label="Booking and payment">
-                <div class="deposit-row"><span>Reservation deposit</span><strong>US$50</strong></div>
+                <div class="deposit-row"><span>Reservation Deposit</span><strong>US$50</strong></div>
                 <p class="deposit-caption">Credited toward your final booking amount.</p>
                 <div class="booking-terms">
                     <p>Course payment: cash in KRW on the day.</p>
                     <p>Interpreter &amp; venue arrangements begin after deposit payment.</p>
                 </div>
-                <button type="button" class="submit-btn" onclick="openPaymentModal()">Continue to deposit <span aria-hidden="true">→</span></button>
-                <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">Inquire via WhatsApp <span>No payment required</span></button>
+                <button type="button" class="submit-btn" onclick="openPaymentModal()">Proceed to Payment <span aria-hidden="true">→</span></button>
+                <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">WhatsApp Inquiry <span>No payment required</span></button>
             </section>
             </div>
         </div>

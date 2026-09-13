@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Concierge Desk · Midnight Sunrise Busan</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#111311;color:#f2efe7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}
+    .shell{width:min(1080px,100%);margin:auto;padding:28px 18px 70px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.eyebrow{color:#c9ad6a;font-size:11px;font-weight:700;letter-spacing:1.8px}.top h1{margin:5px 0 0;font-family:Didot,"Bodoni MT",Georgia,serif;font-size:30px;font-weight:500}.ghost{border:1px solid #4a504a;background:transparent;color:#bbc0b9;border-radius:7px;padding:9px 12px}
+    .card{border:1px solid #343a35;border-radius:12px;background:#1a1d1a;padding:20px;box-shadow:0 16px 50px #0004}.login{width:min(420px,100%);margin:14vh auto}.login h1{font-family:Didot,"Bodoni MT",Georgia,serif;font-weight:500}.login p,.muted{color:#9fa69f;line-height:1.5}.grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px}.panel-title{margin:0 0 16px;font-size:16px}.field{display:block;margin:13px 0}.field span{display:block;margin-bottom:6px;color:#bcc2bb;font-size:12px}.field input,.field select,.field textarea{width:100%;border:1px solid #424942;border-radius:7px;background:#242824;color:#f4f1e8;padding:12px}.field textarea{min-height:82px;resize:vertical}.course-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.course-buttons button{padding:12px 8px;border:1px solid #454c45;border-radius:8px;background:#232723;color:#daddd7;text-align:left}.course-buttons button strong,.course-buttons button small{display:block}.course-buttons button small{margin-top:4px;color:#959d95}.course-buttons button.active{border-color:#cfb36d;background:#322f23;color:#f7e8bf}.amounts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.total{display:flex;justify-content:space-between;align-items:end;margin:18px 0;padding-top:16px;border-top:1px solid #3d433d}.total strong{color:#eed486;font-size:27px}.primary{width:100%;border:1px solid #e0c068;border-radius:8px;padding:14px;background:linear-gradient(110deg,#9f7728,#e2bd5c,#fff0a0,#bd8828);color:#18140b;font-weight:800}.primary:disabled{opacity:.5}.status{min-height:22px;margin-top:12px;color:#c8b87f;font-size:12px}.reservation-list{display:grid;gap:8px;max-height:630px;overflow:auto}.reservation{width:100%;padding:13px;border:1px solid #383f39;border-radius:8px;background:#222622;color:#e6e8e3;text-align:left}.reservation.active{border-color:#cdb16c;background:#302e24}.reservation strong,.reservation span{display:block}.reservation span{margin-top:5px;color:#99a199;font-size:11px}.result{margin-top:18px;padding:16px;border:1px solid #55513e;border-radius:10px;background:#242319}.result h3{margin:0 0 8px}.result a{color:#f0cf78;word-break:break-all}.actions{display:flex;gap:8px;margin-top:12px}.actions a{flex:1;text-align:center;text-decoration:none;border:1px solid #b89b52;border-radius:7px;padding:10px}.qr{display:block;width:220px;max-width:100%;margin:16px auto 0;background:#fff;border-radius:8px}.hidden{display:none!important}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.reservation-list{max-height:300px}.amounts{grid-template-columns:1fr 1fr}.top h1{font-size:25px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card login" id="loginPanel">
+      <div class="eyebrow">MIDNIGHT SUNRISE BUSAN</div><h1>Concierge Desk</h1>
+      <p>Private access for reservation and invoice management.</p>
+      <label class="field"><span>Admin password</span><input id="password" type="password" autocomplete="current-password"></label>
+      <button class="primary" id="loginButton">Sign in</button><div class="status" id="loginStatus"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <header class="top"><div><div class="eyebrow">PRIVATE ADMIN</div><h1>Concierge Desk</h1></div><button class="ghost" id="logoutButton">Sign out</button></header>
+      <div class="grid">
+        <section class="card"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
+        <section class="card">
+          <h2 class="panel-title">Create a PayPal invoice</h2>
+          <label class="field"><span>Customer name</span><input id="customerName" placeholder="Customer name"></label>
+          <label class="field"><span>Customer email <small class="muted">Optional — leave blank for WhatsApp or QR</small></span><input id="customerEmail" type="email" placeholder="customer@example.com"></label>
+          <label class="field"><span>Course or arrangement</span></label>
+          <div class="course-buttons" id="courseButtons">
+            <button data-course="₩600,000 Course" data-usd="430"><strong>₩600,000</strong><small>Course preset</small></button>
+            <button data-course="₩800,000 Course" data-usd="570"><strong>₩800,000</strong><small>Course preset</small></button>
+            <button data-course="₩1,200,000 High-End VIP" data-usd="860"><strong>₩1,200,000</strong><small>High-End VIP</small></button>
+            <button data-course="Custom arrangement" data-usd="0"><strong>Custom</strong><small>Temporary invoice</small></button>
+          </div>
+          <label class="field"><span>Invoice title</span><input id="courseName" value="Custom arrangement"></label>
+          <div class="amounts">
+            <label class="field"><span>Course · USD</span><input id="courseUsd" type="number" min="0" step="0.01" value="0"></label>
+            <label class="field"><span>Interpreter · USD</span><input id="interpreterUsd" type="number" min="0" step="0.01" value="0"></label>
+            <label class="field"><span>Additional · USD</span><input id="additionalUsd" type="number" min="0" step="0.01" value="0"></label>
+            <label class="field"><span>Deposit credit · USD</span><input id="depositUsd" type="number" min="0" step="0.01" value="50"></label>
+          </div>
+          <label class="field"><span>Note</span><textarea id="note" placeholder="Agreed inclusions or temporary arrangement details"></textarea></label>
+          <div class="total"><span>Final amount</span><strong id="total">US$0.00</strong></div>
+          <button class="primary" id="invoiceButton">Create payment request</button><div class="status" id="invoiceStatus"></div>
+          <div class="result hidden" id="result"><h3 id="resultTitle"></h3><a id="payerLink" target="_blank" rel="noopener"></a><div class="actions"><a id="openLink" target="_blank" rel="noopener">Open payment</a><a id="whatsappLink" target="_blank" rel="noopener">Send by WhatsApp</a></div><img class="qr hidden" id="qr" alt="PayPal invoice QR code"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <script>
+    const $=id=>document.getElementById(id); let reservations=[],selectedReservation=null;
+    async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','x-admin-request':'1',...(options.headers||{})}});const data=await response.json();if(!response.ok)throw new Error(data.detail||'Please try again.');return data}
+    async function loadReservations(){const data=await api('/api/admin/reservations');reservations=data.reservations;$('reservations').replaceChildren(...(reservations.length?reservations.map(renderReservation):[Object.assign(document.createElement('p'),{className:'muted',textContent:'No saved reservations yet.'})]))}
+    function renderReservation(r){const b=document.createElement('button');b.className='reservation';b.innerHTML=`<strong>#${r.id} · ${escapeHtml(r.name)}</strong><span>${escapeHtml(r.visit_date)} · ${escapeHtml(r.party_size)} guests · ${escapeHtml(r.budget)}</span><span>${escapeHtml(r.payment_status||'unpaid')} · ${escapeHtml(r.hotel)}</span>`;b.onclick=()=>selectReservation(r,b);return b}
+    function escapeHtml(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
+    function selectReservation(r,button){selectedReservation=r;document.querySelectorAll('.reservation').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('customerName').value=r.name;const course=document.querySelector(`[data-course^="₩${Number((r.budget||'').replace(/\D/g,''))?.toLocaleString('en-US')}"]`);if(course)course.click();$('depositUsd').value=r.payment_status==='paid'?(r.deposit_amount||50):0;updateTotal()}
+    function updateTotal(){const value=id=>Number($(id).value)||0;$('total').textContent='US$'+Math.max(0,value('courseUsd')+value('interpreterUsd')+value('additionalUsd')-value('depositUsd')).toFixed(2)}
+    document.querySelectorAll('#courseButtons button').forEach(button=>button.onclick=()=>{document.querySelectorAll('#courseButtons button').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('courseName').value=button.dataset.course;$('courseUsd').value=button.dataset.usd;updateTotal()});
+    ['courseUsd','interpreterUsd','additionalUsd','depositUsd'].forEach(id=>$(id).addEventListener('input',updateTotal));
+    $('loginButton').onclick=async()=>{try{$('loginStatus').textContent='Signing in…';await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await loadReservations();$('loginStatus').textContent=''}catch(e){$('loginStatus').textContent=e.message}};
+    $('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginButton').click()});
+    $('logoutButton').onclick=async()=>{await api('/api/admin/logout',{method:'POST',body:'{}'});location.reload()};
+    $('invoiceButton').onclick=async()=>{const button=$('invoiceButton');button.disabled=true;$('invoiceStatus').textContent='Creating secure PayPal invoice…';$('result').classList.add('hidden');try{const data=await api('/api/admin/invoices',{method:'POST',body:JSON.stringify({reservationId:selectedReservation?.id||null,customerName:$('customerName').value.trim(),customerEmail:$('customerEmail').value.trim(),courseName:$('courseName').value.trim(),courseUsd:Number($('courseUsd').value)||0,interpreterUsd:Number($('interpreterUsd').value)||0,additionalUsd:Number($('additionalUsd').value)||0,depositUsd:Number($('depositUsd').value)||0,note:$('note').value.trim()})});$('resultTitle').textContent=`${data.invoice_id} · US$${data.total}`;$('payerLink').textContent=data.payer_url;$('payerLink').href=data.payer_url;$('openLink').href=data.payer_url;$('whatsappLink').href='https://wa.me/?text='+encodeURIComponent(`Your PayPal invoice is ready: ${data.payer_url}`);if(data.qr_image){$('qr').src='data:image/png;base64,'+data.qr_image;$('qr').classList.remove('hidden')}else{$('qr').classList.add('hidden')}$('result').classList.remove('hidden');$('invoiceStatus').textContent='Payment request created.'}catch(e){$('invoiceStatus').textContent=e.message}finally{button.disabled=false}};
+    api('/api/admin/session').then(async()=>{$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await loadReservations()}).catch(()=>{});updateTotal();
+  </script>
+</body>
+</html>
+

@@ -95,7 +95,7 @@ def connect_db():
     columns = {row[1] for row in db.execute('PRAGMA table_info(reservations)')}
     for name, definition in {
         'paypal_order_id': 'TEXT', 'paypal_capture_id': 'TEXT',
-        'deposit_amount': 'TEXT', 'deposit_currency': 'TEXT'
+        'deposit_amount': 'TEXT', 'deposit_currency': 'TEXT', 'payment_status': 'TEXT'
     }.items():
         if name not in columns:
             db.execute(f'ALTER TABLE reservations ADD COLUMN {name} {definition}')
@@ -160,27 +160,26 @@ def paypal_headers(request_id: str | None = None) -> dict[str, str]:
     return headers
 
 
-def reservation_whatsapp(data: ReservationRequest, reservation_id: int) -> str | None:
+def reservation_whatsapp(data: ReservationRequest, reservation_id: int, paid: bool = True) -> str | None:
     concierge_whatsapp = os.getenv('BUSAN_WHATSAPP_NUMBER', '').lstrip('+')
     if not re.fullmatch(r'[1-9][0-9]{7,14}', concierge_whatsapp):
         return None
-    message = f'Hello, my US$50 deposit is paid. Reservation #{reservation_id}. Name: {data.name}, Date: {data.visitDate}.'
+    payment_note = 'My US$50 deposit is paid.' if paid else 'I would like to continue without prepayment.'
+    message = f'Hello, {payment_note} Request #{reservation_id}. Name: {data.name}, Date: {data.visitDate}.'
     return f'https://wa.me/{concierge_whatsapp}?text={quote(message)}'
 
 
 def send_paid_reservation_alert(data: ReservationRequest, reservation_id: int, capture_id: str):
     text = (
-        f'✅ *부산 VIP 예약금 결제 완료!*\n\n'
-        f'🆔 *No.* {reservation_id}\n'
-        f'👤 *이름:* {data.name} ({data.company or "Individual"} / {data.jobTitle or "-"})\n'
-        f'📅 *방문일:* {data.visitDate}\n'
-        f'👥 *인원:* {data.partySize}명\n'
-        f'💰 *선택 코스:* {data.budget}\n'
-        f'💳 *예약금:* US$50 결제 완료\n'
-        f'🔐 *PayPal Capture:* `{capture_id}`\n'
-        f'🗣️ *통역사:* {data.guideType}\n'
-        f'🏨 *호텔:* {data.hotel}\n'
-        f'📱 *연락처(WhatsApp):* `{data.phone}`'
+        f'[PAID] VIP 예약 #{reservation_id}\n'
+        f'이름: {data.name}\n'
+        f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
+        f'코스: {data.budget}\n'
+        f'통역: {data.guideType}\n'
+        f'호텔: {data.hotel}\n'
+        f'연락처: {data.phone}\n'
+        f'예약금: US$50 결제 완료\n'
+        f'PayPal: {capture_id}'
     )
     send_telegram_alert(text)
     send_email_alert(text, reservation_id)
@@ -266,11 +265,11 @@ def capture_paypal_order(order_id: str):
     with closing(connect_db()) as db, db:
         cursor = db.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
-             paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+             paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency, payment_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
             'Private VIP', data.budget, data.guideType, data.hotel.strip(), data.phone.strip(),
-            order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY,
+            order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY, 'paid',
         ))
         reservation_id = cursor.lastrowid
         db.execute('DELETE FROM pending_paypal_orders WHERE order_id = ?', (order_id,))
@@ -282,8 +281,34 @@ def capture_paypal_order(order_id: str):
 
 
 @app.post('/api/reservation')
-def unpaid_reservation_disabled():
-    raise HTTPException(402, 'A US$50 PayPal deposit is required to submit a reservation.')
+def create_unpaid_reservation(data: ReservationRequest):
+    if not data.name.strip() or not data.hotel.strip() or not data.phone.strip():
+        raise HTTPException(422, 'Name, hotel, and phone number are required.')
+    with closing(connect_db()) as db, db:
+        cursor = db.execute('''INSERT INTO reservations
+            (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
+             payment_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
+            'Private VIP', data.budget, data.guideType, data.hotel.strip(), data.phone.strip(), 'unpaid',
+        ))
+        reservation_id = cursor.lastrowid
+    text = (
+        f'[NOT PAID] VIP 문의 #{reservation_id}\n'
+        f'이름: {data.name}\n'
+        f'날짜/인원: {data.visitDate} / {data.partySize}명\n'
+        f'코스: {data.budget}\n'
+        f'통역: {data.guideType}\n'
+        f'호텔: {data.hotel}\n'
+        f'연락처: {data.phone}\n'
+        f'상태: WhatsApp 상담 / 예약 미확정'
+    )
+    send_telegram_alert(text)
+    send_email_alert(text, reservation_id)
+    return {
+        'status': 'success', 'reservation_id': reservation_id, 'payment_status': 'unpaid',
+        'whatsapp_url': reservation_whatsapp(data, reservation_id, paid=False),
+    }
 
 @app.get('/')
 def home():

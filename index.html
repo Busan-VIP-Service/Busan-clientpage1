@@ -73,6 +73,12 @@
             transition: opacity 0.2s; margin-top: 20px; margin-bottom: 20px;
         }
         button.submit-btn:active { opacity: 0.8; }
+        button.whatsapp-btn {
+            width: 100%; margin: -10px 0 20px; padding: 13px; border: 1px solid #2cb742;
+            border-radius: 8px; background: transparent; color: #63dc76; font-size: 14px;
+            font-weight: 700; cursor: pointer;
+        }
+        button:disabled { cursor: wait; opacity: 0.55; }
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center;
@@ -158,8 +164,8 @@
             </div>
 
             <div class="deposit-card">
-                <strong>US$50 Reservation Deposit</strong>
-                <p>A deposit is required to secure your reservation and prevent no-shows. It will be credited toward your final booking amount. The remaining balance is confirmed by your concierge and paid in Korean won cash.</p>
+                <strong>Secure Your Booking with a US$50 Deposit</strong>
+                <p>Pay the deposit to prevent no-shows and secure your request. It will be credited toward your final booking amount. If you prefer not to prepay, you can continue through WhatsApp without a confirmed reservation.</p>
             </div>
 
             <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
@@ -195,6 +201,7 @@
             </div>
 
             <button class="submit-btn" onclick="openPaymentModal()">Continue to US$50 Deposit</button>
+            <button class="whatsapp-btn" onclick="continueWithoutPayment()">Continue Without Payment via WhatsApp</button>
         </div>
     </div>
 
@@ -359,6 +366,29 @@
             document.getElementById('confirmModal').classList.add('active');
             try { await preparePayPal(); }
             catch (error) { document.getElementById('paymentStatus').textContent = error.message; }
+        }
+
+        async function continueWithoutPayment() {
+            if (!validateReservation()) return;
+            if (!confirm('Continue without the US$50 deposit? Your request will not be secured until the concierge confirms it on WhatsApp.')) return;
+            const buttons = document.querySelectorAll('#formContent button');
+            buttons.forEach(button => button.disabled = true);
+            try {
+                const result = await apiJson('/api/reservation', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' },
+                    body: JSON.stringify(reservationData())
+                });
+                if (!Number.isInteger(result.reservation_id)) throw new Error('Unexpected reservation response.');
+                if (result.whatsapp_url) {
+                    window.location.href = result.whatsapp_url;
+                } else {
+                    alert('Your unpaid request was submitted. The concierge will contact you shortly.');
+                    location.reload();
+                }
+            } catch (error) {
+                alert(error.message || 'Unable to submit your request. Please try again.');
+                buttons.forEach(button => button.disabled = false);
+            }
         }
 
         function closePaymentModal() {

@@ -109,7 +109,7 @@ class ReservationRequest(BaseModel):
     visitDate: date
     partySize: str = Field(pattern=r'^(?:[1-9][0-9]?|100)$')
     vibe: Literal['Casual Bar','Dynamic Night','Ultimate VIP']
-    budget: Literal['500 - 1000','1000 - 2000','2000 - 3000','No limit']
+    budget: Literal['600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
     guideType: Literal['Professional Interpreter','Basic Guide']
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
@@ -136,7 +136,7 @@ def create_reservation(data: ReservationRequest):
         f"📅 *방문일:* {data.visitDate}\n"
         f"👥 *인원:* {data.partySize}명\n"
         f"✨ *무드:* {data.vibe}\n"
-        f"💰 *예산:* ${data.budget}\n"
+        f"💰 *선택 코스:* {data.budget}\n"
         f"🗣️ *통역사:* {data.guideType}\n"
         f"🏨 *호텔:* {data.hotel}\n"
         f"📱 *연락처(WhatsApp):* `{data.phone}`"

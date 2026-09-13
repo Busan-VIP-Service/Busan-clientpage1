@@ -165,7 +165,7 @@
 
             <div class="deposit-card">
                 <strong>Secure Your Booking with a US$50 Deposit</strong>
-                <p>Pay the deposit to prevent no-shows and secure your request. It will be credited toward your final booking amount. If you prefer not to prepay, you can continue through WhatsApp without a confirmed reservation.</p>
+                <p>Pay the deposit to prevent no-shows and begin advance arrangements. It will be credited toward your final booking amount. WhatsApp consultation is available without payment, but no interpreter assignment or venue reservation begins until the prepayment is received.</p>
             </div>
 
             <label class="section-label">Select Your VIP Course (KRW · Per Guest) <span class="required-star">*</span></label>
@@ -176,11 +176,7 @@
             </div>
             <p class="payment-note"><strong>Cash payment required.</strong> Please prepare the selected course amount in Korean won (KRW). Payment is made in cash on the day of your experience.</p>
 
-            <label class="section-label">Preferred Guide / Interpreter Type <span class="required-star">*</span></label>
-            <div class="options-vertical">
-                <div class="option-vertical-item"><input type="radio" id="guide_pro" name="guideType" value="Professional Interpreter"><label for="guide_pro">Professional Business Interpreter (English Fluent)</label></div>
-                <div class="option-vertical-item"><input type="radio" id="guide_basic" name="guideType" value="Basic Guide"><label for="guide_basic">Basic Guide (English Not Available / Standard)</label></div>
-            </div>
+            <p class="payment-note"><strong>Fluent English Interpreter Included.</strong> A highly fluent English-speaking interpreter will accompany your group. Interpreter assignment, venue reservations and other advance arrangements begin after the required prepayment is received.</p>
 
             <label class="section-label">Hotel Name <span class="required-star">*</span></label>
             <input type="text" id="hotelInput" placeholder="e.g., Signiel Busan">
@@ -291,14 +287,14 @@
             return {
                 name: field('nameInput'), company: field('companyInput'), jobTitle: field('titleInput'),
                 visitDate: field('dateInput'), partySize: selected('partySize'), budget: selected('budget'),
-                guideType: selected('guideType'), hotel: field('hotelInput'),
+                hotel: field('hotelInput'),
                 phone: `${field('countryCode')} ${field('contactInput')}`
             };
         }
 
         function validateReservation() {
             const data = reservationData();
-            if (!data.name || !data.visitDate || !data.partySize || !data.budget || !data.guideType || !data.hotel || !field('contactInput')) {
+            if (!data.name || !data.visitDate || !data.partySize || !data.budget || !data.hotel || !field('contactInput')) {
                 alert('Please complete all required fields before continuing to payment.');
                 return false;
             }
@@ -370,7 +366,7 @@
 
         async function continueWithoutPayment() {
             if (!validateReservation()) return;
-            if (!confirm('Continue without the US$50 deposit? Your request will not be secured until the concierge confirms it on WhatsApp.')) return;
+            if (!confirm('Continue with a WhatsApp inquiry only? No interpreter assignment or venue reservation will begin until the prepayment is received.')) return;
             const buttons = document.querySelectorAll('#formContent button');
             buttons.forEach(button => button.disabled = true);
             try {

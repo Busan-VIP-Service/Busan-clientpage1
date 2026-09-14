@@ -447,6 +447,7 @@
         const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
         const field = id => document.getElementById(id).value.trim();
         let paypalReady = false;
+        let paypalButtons = null;
 
         const coursePreviews = {
             '600000 KRW per guest': {
@@ -533,13 +534,15 @@
         }
 
         async function preparePayPal() {
-            if (paypalReady) return;
+            const container = document.getElementById('paypal-button-container');
+            if (paypalReady && container.childElementCount) return;
             const status = document.getElementById('paymentStatus');
             status.textContent = 'Loading secure PayPal checkout…';
             const config = await apiJson('/api/paypal/config');
             if (!config.enabled || !config.client_id) throw new Error('PayPal checkout is being configured. Please contact the concierge.');
             await loadPayPalSdk(config.client_id);
-            await window.paypal.Buttons({
+            container.replaceChildren();
+            paypalButtons = window.paypal.Buttons({
                 style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
                 createOrder: async () => {
                     if (!validateReservation()) throw new Error('Please check the reservation form.');
@@ -563,7 +566,8 @@
                 },
                 onCancel: () => { status.textContent = 'Payment was cancelled. Your reservation has not been submitted.'; },
                 onError: error => { status.textContent = error.message || 'Payment could not be completed. Please try again.'; }
-            }).render('#paypal-button-container');
+            });
+            await paypalButtons.render(container);
             paypalReady = true;
             status.textContent = '';
         }
@@ -614,6 +618,10 @@
 
         function closePaymentModal() {
             document.getElementById('confirmModal').classList.remove('active');
+            document.getElementById('paypal-button-container').replaceChildren();
+            document.getElementById('paymentStatus').textContent = '';
+            paypalButtons = null;
+            paypalReady = false;
         }
     </script>
 </body>

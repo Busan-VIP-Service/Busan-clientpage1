@@ -205,15 +205,15 @@
         .course-preview[hidden] { display: none; }
         .course-preview-kicker { color: #cdb77d; font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
         .course-preview h4 { margin: 7px 0 10px; color: #f0e3c3; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 20px; font-weight: 500; }
-        .course-preview-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 14px; }
+        .course-preview-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px -16px 14px; }
         .course-preview-gallery.single { grid-template-columns: 1fr; }
-        .course-preview-gallery img { display: block; width: 100%; height: 230px; border-radius: 7px; object-fit: cover; object-position: center 28%; border: 1px solid #ffffff18; background: #111; }
-        .course-preview-gallery.single img { height: min(330px, 48vw); }
+        .course-preview-gallery img { display: block; width: 100%; height: auto; max-height: none; border-radius: 0; object-fit: contain; object-position: center; border: 0; background: #111; }
+        .course-preview-gallery.single img { height: auto; }
         .venue-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
         .venue-types span { padding: 6px 9px; border: 1px solid #55594b; border-radius: 999px; color: #d6d9d1; background: #292d27; font-size: 11px; }
         .course-preview p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
         .course-preview small { display: block; margin-top: 9px; color: #857f70; font-size: 10px; line-height: 1.45; }
-        @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } .course-preview-gallery img, .course-preview-gallery.single img { height: 250px; } }
+        @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } .course-preview-gallery img, .course-preview-gallery.single img { height: auto; } }
         .content .contact-group { margin: 0; }
         .content .contact-group select { flex: 0 0 100px; min-width: 0; }
         .content .contact-group input { flex: 1; min-width: 0; }

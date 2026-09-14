@@ -335,10 +335,11 @@
             <section class="booking-checkout" aria-label="Booking and payment">
                 <div class="deposit-row"><span>Talk first. Pay when you're ready.</span></div>
                 <button type="button" class="whatsapp-btn" onclick="continueWithoutPayment()">Chat on WhatsApp <span>Free consultation</span></button>
-                <button type="button" class="submit-btn" onclick="openPaymentModal()">Confirm My VIP Experience — US$50 <span aria-hidden="true">→</span></button>
+                <button type="button" class="submit-btn" onclick="openPaymentModal()">Confirm My Reservation — US$50 <span aria-hidden="true">→</span></button>
                 <div class="booking-terms">
                     <p>Payment starts venue and interpreter arrangements.</p>
-                    <p>US$50 goes toward your final amount.</p>
+                    <p>US$50 confirms your reservation.</p>
+                    <p>It is deducted from your final balance.</p>
                     <p>Balance: cash (KRW) on the day.</p>
                 </div>
             </section>
@@ -350,7 +351,7 @@
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-box">
             <div class="modal-title">Secure Your Reservation</div>
-            <div class="modal-desc" id="confirmText">Your deposit secures the reservation and starts the arrangements.</div>
+            <div class="modal-desc" id="confirmText">US$50 confirms your reservation and is deducted from your final balance.</div>
             <div id="paypal-button-container"></div>
             <div class="payment-status" id="paymentStatus"></div>
             <button class="modal-cancel" type="button" onclick="closePaymentModal()">Back to form</button>
@@ -363,7 +364,7 @@
                 <svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8.5 8L5 21l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg>
             </div>
             <div class="modal-title" id="whatsappModalTitle">Chat Before You Book</div>
-            <div class="consult-copy"><strong>WhatsApp consultation is complimentary.</strong><span>A deposit confirms your reservation.</span></div>
+            <div class="consult-copy"><strong>WhatsApp consultation is complimentary.</strong><span>US$50 confirms your reservation and is deducted from your final balance.</span></div>
             <button class="consult-action" id="consultContinue" type="button" onclick="submitWhatsAppInquiry()">Continue to WhatsApp →</button>
             <div class="consult-status" id="consultStatus"></div>
             <button class="modal-cancel" type="button" onclick="closeWhatsAppModal()">Back</button>
@@ -550,7 +551,7 @@
 
         async function openPaymentModal() {
             if (!validateReservation()) return;
-            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. Your deposit secures the reservation and starts the arrangements.`;
+            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. US$50 confirms your reservation and is deducted from your final balance.`;
             document.getElementById('confirmModal').classList.add('active');
             try { await preparePayPal(); }
             catch (error) { document.getElementById('paymentStatus').textContent = error.message; }

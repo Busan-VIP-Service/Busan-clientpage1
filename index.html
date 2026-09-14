@@ -205,10 +205,15 @@
         .course-preview[hidden] { display: none; }
         .course-preview-kicker { color: #cdb77d; font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
         .course-preview h4 { margin: 7px 0 10px; color: #f0e3c3; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 20px; font-weight: 500; }
+        .course-preview-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 14px; }
+        .course-preview-gallery.single { grid-template-columns: 1fr; }
+        .course-preview-gallery img { display: block; width: 100%; height: 230px; border-radius: 7px; object-fit: cover; object-position: center 28%; border: 1px solid #ffffff18; background: #111; }
+        .course-preview-gallery.single img { height: min(330px, 48vw); }
         .venue-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
         .venue-types span { padding: 6px 9px; border: 1px solid #55594b; border-radius: 999px; color: #d6d9d1; background: #292d27; font-size: 11px; }
         .course-preview p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
         .course-preview small { display: block; margin-top: 9px; color: #857f70; font-size: 10px; line-height: 1.45; }
+        @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } .course-preview-gallery img, .course-preview-gallery.single img { height: 250px; } }
         .content .contact-group { margin: 0; }
         .content .contact-group select { flex: 0 0 100px; min-width: 0; }
         .content .contact-group input { flex: 1; min-width: 0; }
@@ -295,11 +300,12 @@
                     </div>
                 </fieldset>
                 <div class="course-preview" id="coursePreview" hidden aria-live="polite">
-                    <div class="course-preview-kicker">Venue style preview</div>
+                    <div class="course-preview-kicker">Course style preview</div>
                     <h4 id="coursePreviewTitle"></h4>
+                    <div class="course-preview-gallery" id="coursePreviewGallery"></div>
                     <div class="venue-types" id="coursePreviewVenues"></div>
                     <p id="coursePreviewText"></p>
-                    <small>Venue categories are illustrative. Specific venues and inclusions are confirmed after consultation and availability checks.</small>
+                    <small>Reference images show the styling direction only. Actual host appearance, outfit, venue and availability may vary and are confirmed after consultation.</small>
                 </div>
                 <p class="service-note">Course prices exclude interpreter fees. <span>Professional English interpretation is charged separately.</span></p>
             </section>
@@ -444,19 +450,22 @@
 
         const coursePreviews = {
             '600000 KRW per guest': {
-                title: 'Essential Private Night',
-                venues: ['Premium bar', 'Private lounge', 'Late-night dining'],
-                text: 'A relaxed introduction to Busan nightlife with comfortable table service and a well-paced evening.'
+                title: 'Casual Social Style',
+                venues: ['College-inspired casual', 'Relaxed styling', 'Easygoing atmosphere'],
+                text: 'A youthful, everyday look with casual fashion and a comfortable social mood.',
+                images: [{ src: 'course-concept-600-v2.png', alt: 'Casual Private Night in a cozy private Busan lounge' }]
             },
             '800000 KRW per guest': {
-                title: 'Signature VIP Night',
-                venues: ['Upscale lounge', 'Premium bottle bar', 'Late-night dining'],
-                text: 'A more refined route with premium seating, elevated bottle service, and concierge-led venue arrangements.'
+                title: 'Lingerie & Bikini Concept',
+                venues: ['Lingerie styling', 'Bikini styling', 'Bolder visual concept'],
+                text: 'A more daring concept centered on lingerie or bikini styling, arranged around the setting and availability.',
+                images: [{ src: 'course-concept-800-v2.png', alt: 'Glamour Private Night with bikini and lingerie styling options' }]
             },
             '1200000 KRW per guest': {
-                title: 'High-End VIP Night',
-                venues: ['High-end private lounge', 'Luxury bottle service', 'Premium night venue'],
-                text: 'Our highest-level concept, designed around privacy, premium service, and the strongest available venue options.'
+                title: 'Supermodel VIP Concept',
+                venues: ['Model-profile look', 'Luxury styling', 'Highest-tier presentation'],
+                text: 'The most polished visual tier, focused on model-profile presence, refined styling and a premium VIP atmosphere.',
+                images: [{ src: 'course-concept-1200.png', alt: 'Supermodel VIP experience in a private Busan salon' }]
             }
         };
 
@@ -466,6 +475,16 @@
             if (!preview) { panel.hidden = true; return; }
             document.getElementById('coursePreviewTitle').textContent = preview.title;
             document.getElementById('coursePreviewText').textContent = preview.text;
+            const gallery = document.getElementById('coursePreviewGallery');
+            gallery.className = `course-preview-gallery${preview.images.length === 1 ? ' single' : ''}`;
+            gallery.replaceChildren(...preview.images.map(image => {
+                const item = document.createElement('img');
+                item.src = image.src;
+                item.alt = image.alt;
+                item.loading = 'lazy';
+                item.decoding = 'async';
+                return item;
+            }));
             document.getElementById('coursePreviewVenues').replaceChildren(...preview.venues.map(name => {
                 const item = document.createElement('span');
                 item.textContent = name;

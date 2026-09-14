@@ -463,9 +463,11 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
             }],
             'payment_source': {
                 'paypal': {
+                    'payment_method_preference': 'IMMEDIATE_PAYMENT_REQUIRED',
                     'experience_context': {
                         'brand_name': 'Midnight Sunrise Busan',
-                        'landing_page': 'LOGIN',
+                        'landing_page': 'GUEST_CHECKOUT',
+                        'shipping_preference': 'NO_SHIPPING',
                         'user_action': 'PAY_NOW',
                         'return_url': f'{base_url}/api/admin/orders/complete',
                         'cancel_url': f'{base_url}/api/admin/orders/cancelled',

@@ -18,7 +18,7 @@ import time
 import uuid
 import httpx
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -452,6 +452,68 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     )
     if data.note.strip():
         breakdown += f' · {data.note.strip()}'
+    if not data.customerEmail:
+        base_url = str(request.base_url).rstrip('/')
+        order_payload = {
+            'intent': 'CAPTURE',
+            'purchase_units': [{
+                'description': data.courseName.strip()[:127],
+                'custom_id': f'MSB-{uuid.uuid4().hex[:18].upper()}',
+                'amount': {'currency_code': 'USD', 'value': money(total)},
+            }],
+            'payment_source': {
+                'paypal': {
+                    'experience_context': {
+                        'brand_name': 'Midnight Sunrise Busan',
+                        'landing_page': 'LOGIN',
+                        'user_action': 'PAY_NOW',
+                        'return_url': f'{base_url}/api/admin/orders/complete',
+                        'cancel_url': f'{base_url}/api/admin/orders/cancelled',
+                    }
+                }
+            },
+        }
+        try:
+            with httpx.Client(timeout=25) as client:
+                created = client.post(
+                    f'{PAYPAL_API_BASE}/v2/checkout/orders',
+                    headers=paypal_headers(f'admin-order-{uuid.uuid4()}'), json=order_payload,
+                )
+            if not created.is_success:
+                logger.warning('PayPal admin order failed: status=%s body=%s', created.status_code, created.text[:1600])
+                raise HTTPException(502, 'PayPal could not create this payment request.')
+            created_data = created.json()
+            order_id = created_data.get('id', '')
+            payer_url = next(
+                (link.get('href', '') for link in created_data.get('links', []) if link.get('rel') == 'payer-action'),
+                '',
+            ) or next(
+                (link.get('href', '') for link in created_data.get('links', []) if link.get('rel') == 'approve'),
+                '',
+            )
+            if not order_id or not payer_url:
+                raise ValueError('PayPal did not return an order payment link')
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.warning('Admin PayPal order creation failed (%s).', type(exc).__name__)
+            raise HTTPException(502, 'PayPal could not create this payment request.') from exc
+        with closing(connect_db()) as db, db:
+            db.execute('''INSERT OR REPLACE INTO admin_invoices
+                (invoice_id, reservation_id, customer_name, customer_email, course_name,
+                 total_amount, currency, payer_url, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+                order_id, data.reservationId, data.customerName.strip(), '',
+                data.courseName.strip(), money(total), 'USD', payer_url, 'created',
+            ))
+        send_telegram_alert(
+            f'[결제 요청 생성] {order_id}\n고객: {data.customerName}\n'
+            f'코스: {data.courseName}\n최종 청구: US${money(total)}\n{payer_url}'
+        )
+        return {
+            'invoice_id': order_id, 'total': money(total), 'currency': 'USD',
+            'payer_url': payer_url, 'qr_image': '', 'request_type': 'order',
+        }
     recipient = {'billing_info': {'name': {'given_name': data.customerName.strip()[:140]}}}
     if data.customerEmail:
         recipient['billing_info']['email_address'] = data.customerEmail.strip()
@@ -560,8 +622,59 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     )
     return {
         'invoice_id': invoice_id, 'total': money(total), 'currency': 'USD',
-        'payer_url': payer_url, 'qr_image': qr_image,
+        'payer_url': payer_url, 'qr_image': qr_image, 'request_type': 'invoice',
     }
+
+
+@app.get('/api/admin/orders/complete', response_class=HTMLResponse)
+def complete_admin_order(token: str):
+    if not re.fullmatch(r'[A-Z0-9]{8,32}', token):
+        raise HTTPException(422, 'Invalid PayPal order ID.')
+    with closing(connect_db()) as db:
+        order = db.execute('''SELECT invoice_id, customer_name, course_name, total_amount, currency, status
+            FROM admin_invoices WHERE invoice_id = ?''', (token,)).fetchone()
+    if not order:
+        raise HTTPException(404, 'Payment request not found.')
+    if order['status'] != 'paid':
+        try:
+            with httpx.Client(timeout=25) as client:
+                response = client.post(
+                    f'{PAYPAL_API_BASE}/v2/checkout/orders/{token}/capture',
+                    headers=paypal_headers(f'admin-capture-{token}'), json={},
+                )
+            if not response.is_success:
+                logger.warning('PayPal admin capture failed: status=%s body=%s', response.status_code, response.text[:1600])
+                raise HTTPException(502, 'PayPal could not confirm this payment.')
+            payment = response.json()
+            capture = payment['purchase_units'][0]['payments']['captures'][0]
+            amount = capture['amount']
+            if payment.get('status') != 'COMPLETED' or capture.get('status') != 'COMPLETED':
+                raise ValueError('PayPal payment is not completed')
+            if amount.get('currency_code') != order['currency'] or amount.get('value') != order['total_amount']:
+                raise ValueError('PayPal payment amount does not match')
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.warning('Admin PayPal capture failed for %s (%s).', token, type(exc).__name__)
+            raise HTTPException(502, 'PayPal could not confirm this payment.') from exc
+        with closing(connect_db()) as db, db:
+            db.execute("UPDATE admin_invoices SET status = 'paid' WHERE invoice_id = ?", (token,))
+        send_telegram_alert(
+            f'[결제 완료] {token}\n고객: {order["customer_name"]}\n'
+            f'코스: {order["course_name"]}\n결제 금액: US${order["total_amount"]}'
+        )
+    return HTMLResponse('''<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Payment confirmed</title><body style="margin:0;background:#0d100e;color:#f7f1df;font-family:Arial,sans-serif;display:grid;place-items:center;min-height:100vh;text-align:center">
+        <main style="max-width:520px;padding:40px"><div style="color:#d8b96d;letter-spacing:.18em;font-size:12px">MIDNIGHT SUNRISE BUSAN</div>
+        <h1>Payment confirmed</h1><p style="color:#c8c9c4;line-height:1.6">Thank you. Your concierge team has been notified.<br>You may now return to WhatsApp.</p></main></body></html>''')
+
+
+@app.get('/api/admin/orders/cancelled', response_class=HTMLResponse)
+def cancelled_admin_order():
+    return HTMLResponse('''<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Payment not completed</title><body style="margin:0;background:#0d100e;color:#f7f1df;font-family:Arial,sans-serif;display:grid;place-items:center;min-height:100vh;text-align:center">
+        <main style="max-width:520px;padding:40px"><div style="color:#d8b96d;letter-spacing:.18em;font-size:12px">MIDNIGHT SUNRISE BUSAN</div>
+        <h1>Payment not completed</h1><p style="color:#c8c9c4;line-height:1.6">No payment was taken. Return to WhatsApp if you need help.</p></main></body></html>''')
 
 
 @app.get('/admin')

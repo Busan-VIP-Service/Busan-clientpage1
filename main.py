@@ -413,6 +413,27 @@ def admin_reservations(request: Request):
     return {'reservations': [dict(row) for row in rows]}
 
 
+@app.get('/api/admin/paypal-invoicing-status')
+def admin_paypal_invoicing_status(request: Request):
+    require_admin(request)
+    try:
+        with httpx.Client(timeout=20) as client:
+            response = client.get(
+                f'{PAYPAL_API_BASE}/v2/invoicing/invoices',
+                headers=paypal_headers(),
+                params={'page': 1, 'page_size': 1, 'total_required': 'false'},
+            )
+        if response.is_success:
+            return {'enabled': True}
+        logger.warning('PayPal invoicing status failed: status=%s body=%s', response.status_code, response.text[:1600])
+        return {'enabled': False, 'status': response.status_code}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning('PayPal invoicing status check failed (%s).', type(exc).__name__)
+        raise HTTPException(502, 'Unable to verify PayPal Invoicing right now.') from exc
+
+
 @app.post('/api/admin/invoices')
 def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     require_admin(request)

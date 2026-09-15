@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from contextlib import closing
 from decimal import Decimal
 from email.message import EmailMessage
@@ -122,6 +122,60 @@ def connect_db():
         payer_url TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     db.commit()
     return db
+
+
+def analytics_db():
+    db = connect_db()
+    db.execute('''CREATE TABLE IF NOT EXISTS page_views (
+        event_id TEXT PRIMARY KEY, day TEXT NOT NULL, source TEXT NOT NULL)''')
+    db.execute('CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day)')
+    db.commit()
+    return db
+
+
+class PageViewRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    event_id: str = Field(pattern=r'^[a-zA-Z0-9-]{16,64}$')
+    source: Literal['qr', 'direct', 'search', 'referral']
+
+
+@app.post('/api/analytics/page-view', status_code=204)
+def record_page_view(data: PageViewRequest, request: Request):
+    # Only instrumented browser loads count; admin browsing is excluded.
+    if request.headers.get('x-busan-request') != '1':
+        raise HTTPException(400, 'Browser request required.')
+    if re.search(r'bot|crawler|spider|headless', request.headers.get('user-agent', ''), re.I):
+        return Response(status_code=204)
+    try:
+        require_admin(request)
+        return Response(status_code=204)
+    except HTTPException:
+        pass
+    day = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
+    with closing(analytics_db()) as db, db:
+        db.execute('INSERT OR IGNORE INTO page_views VALUES (?, ?, ?)',
+                   (data.event_id, day, data.source))
+    return Response(status_code=204)
+
+
+@app.get('/api/admin/analytics')
+def admin_analytics(request: Request, response: Response):
+    require_admin(request)
+    response.headers['Cache-Control'] = 'no-store'
+    today = datetime.now(timezone(timedelta(hours=9))).date()
+    start = (today - timedelta(days=29)).isoformat()
+    with closing(analytics_db()) as db:
+        totals = dict(db.execute('''SELECT COUNT(*) AS total,
+            COALESCE(SUM(day = ?), 0) AS today,
+            COALESCE(SUM(day >= ?), 0) AS week, MIN(day) AS started
+            FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat())).fetchone())
+        counts = {r['day']: r['views'] for r in db.execute(
+            'SELECT day, COUNT(*) AS views FROM page_views WHERE day >= ? GROUP BY day', (start,))}
+        sources = {r['source']: r['views'] for r in db.execute(
+            'SELECT source, COUNT(*) AS views FROM page_views WHERE day >= ? GROUP BY source', (start,))}
+    return {**totals, 'days': [{'day': (today - timedelta(days=i)).isoformat(),
+            'views': counts.get((today - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
+            'sources': sources}
 
 
 def issue_admin_session() -> str:
@@ -692,7 +746,7 @@ def home():
 
 @app.get('/{asset}')
 def static_asset(asset: str):
-    allowed = {'index.html', 'admin.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'course-concept-600-v2.png', 'course-concept-800-v2.png', 'course-concept-1200.png'}
+    allowed = {'analytics.js', 'index.html', 'admin.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'course-concept-600-v2.png', 'course-concept-800-v2.png', 'course-concept-1200.png'}
     if asset not in allowed and not re.fullmatch(r'(?:main|mobile_main|image1 \(\d+\))\.png', asset):
         raise HTTPException(404)
     path = ROOT / asset
@@ -703,4 +757,3 @@ def static_asset(asset: str):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host=os.getenv('BUSAN_HOST', '127.0.0.1'), port=int(os.getenv('PORT', os.getenv('BUSAN_PHONE_PORT', '8001'))))
-

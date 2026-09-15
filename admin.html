@@ -23,6 +23,17 @@
 
     <section id="dashboard" class="hidden">
       <header class="top"><div><div class="eyebrow">PRIVATE ADMIN</div><h1>Concierge Desk</h1></div><button class="ghost" id="logoutButton">Sign out</button></header>
+      <section class="card" style="margin-bottom:18px">
+        <div class="top"><h2 class="panel-title">페이지 조회수</h2><button class="ghost" id="refreshAnalytics">새로고침</button></div>
+        <div id="analyticsStatus" class="muted" role="status">집계를 불러오는 중…</div>
+        <div id="analyticsContent" hidden>
+          <div class="course-buttons" id="viewTotals" style="margin:16px 0"></div>
+          <h3>최근 30일 유입</h3><div id="viewSources" class="muted"></div>
+          <details style="margin-top:16px"><summary>최근 30일 날짜별 조회수</summary><div style="max-height:300px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr><th>날짜 (한국 시간)</th><th>조회수</th></tr></thead><tbody id="viewDays"></tbody></table></div></details>
+        </div>
+        <p class="muted" style="font-size:12px">조회수는 페이지가 열린 횟수이며 새로고침도 포함됩니다. 방문자 수와는 다릅니다. 집계 설치 이후부터 기록하며 로그인한 관리자의 조회는 제외합니다. 직접 방문에는 구분 표시 없는 QR·앱 유입도 포함됩니다.</p>
+        <p class="muted" style="font-size:12px">QR을 별도로 집계하려면 이 주소로 QR을 만드세요: <a style="color:#f0cf78;word-break:break-all" href="https://midnightsunrisebusan.com/?utm_source=qr">https://midnightsunrisebusan.com/?utm_source=qr</a></p>
+      </section>
       <div class="grid">
         <section class="card"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
         <section class="card">
@@ -55,6 +66,21 @@
   <script>
     const $=id=>document.getElementById(id); let reservations=[],selectedReservation=null;
     async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','x-admin-request':'1',...(options.headers||{})}});const data=await response.json();if(!response.ok){const detail=Array.isArray(data.detail)?data.detail.map(x=>x.msg).join(' · '):data.detail;throw new Error(detail||'Please try again.')}return data}
+    async function loadAnalytics(){
+      $('refreshAnalytics').disabled=true;
+      $('analyticsStatus').textContent='집계를 불러오는 중…';
+      try {
+        const data=await api('/api/admin/analytics');
+        const number=n=>Number(n).toLocaleString('ko-KR');
+        $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${label}</span><strong style="display:block;font-size:28px;margin-top:8px">${number(n)}</strong></div>`).join('');
+        $('viewSources').textContent=[['qr','QR'],['direct','직접 / 출처 없음'],['search','검색'],['referral','외부 링크']].map(([key,label])=>`${label}: ${number(data.sources[key]||0)}`).join(' · ');
+        $('viewDays').innerHTML=data.days.map(d=>`<tr><td>${escapeHtml(d.day)}</td><td>${number(d.views)}</td></tr>`).join('');
+        $('analyticsContent').hidden=false;
+        $('analyticsStatus').textContent=data.started ? `첫 기록: ${data.started} · 방금 업데이트됨` : '아직 기록된 조회가 없습니다.';
+      } catch(e) { $('analyticsContent').hidden=true; $('analyticsStatus').textContent='조회수를 불러오지 못했습니다. '+e.message; }
+      finally { $('refreshAnalytics').disabled=false; }
+    }
+    $('refreshAnalytics').onclick=loadAnalytics;
     async function loadReservations(){const data=await api('/api/admin/reservations');reservations=data.reservations;$('reservations').replaceChildren(...(reservations.length?reservations.map(renderReservation):[Object.assign(document.createElement('p'),{className:'muted',textContent:'No saved reservations yet.'})]))}
     function renderReservation(r){const b=document.createElement('button');b.className='reservation';b.innerHTML=`<strong>#${r.id} · ${escapeHtml(r.name)}</strong><span>${escapeHtml(r.visit_date)} · ${escapeHtml(r.party_size)} guests · ${escapeHtml(r.budget)}</span><span>${escapeHtml(r.payment_status||'unpaid')} · ${escapeHtml(r.hotel)}</span>`;b.onclick=()=>selectReservation(r,b);return b}
     function escapeHtml(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}
@@ -62,12 +88,11 @@
     function updateTotal(){const value=id=>Number($(id).value)||0;const course=value('courseUsd')*Math.max(1,Math.floor(value('guestCount')));$('total').textContent='US$'+Math.max(0,course+value('serviceFeeUsd')+value('additionalUsd')-value('depositUsd')).toFixed(2)}
     document.querySelectorAll('#courseButtons button').forEach(button=>button.onclick=()=>{document.querySelectorAll('#courseButtons button').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('courseName').value=button.dataset.course;$('courseUsd').value=button.dataset.usd;updateTotal()});
     ['courseUsd','guestCount','serviceFeeUsd','additionalUsd','depositUsd'].forEach(id=>$(id).addEventListener('input',updateTotal));
-    $('loginButton').onclick=async()=>{try{$('loginStatus').textContent='Signing in…';await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await loadReservations();$('loginStatus').textContent=''}catch(e){$('loginStatus').textContent=e.message}};
+    $('loginButton').onclick=async()=>{try{$('loginStatus').textContent='Signing in…';await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadReservations(),loadAnalytics()]);$('loginStatus').textContent=''}catch(e){$('loginStatus').textContent=e.message}};
     $('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginButton').click()});
     $('logoutButton').onclick=async()=>{await api('/api/admin/logout',{method:'POST',body:'{}'});location.reload()};
     $('invoiceButton').onclick=async()=>{if(!$('customerName').value.trim()){$('invoiceStatus').textContent='Enter the customer name first.';$('customerName').focus();return}const button=$('invoiceButton');button.disabled=true;$('invoiceStatus').textContent='Creating secure PayPal payment request…';$('result').classList.add('hidden');try{const data=await api('/api/admin/invoices',{method:'POST',body:JSON.stringify({reservationId:selectedReservation?.id||null,customerName:$('customerName').value.trim(),customerEmail:$('customerEmail').value.trim(),courseName:$('courseName').value.trim(),courseUsd:Number($('courseUsd').value)||0,guestCount:Math.max(1,Math.floor(Number($('guestCount').value)||1)),interpreterUsd:Number($('serviceFeeUsd').value)||0,additionalUsd:Number($('additionalUsd').value)||0,depositUsd:Number($('depositUsd').value)||0,note:$('note').value.trim()})});$('resultTitle').textContent=`${data.invoice_id} · US$${data.total}`;$('payerLink').textContent=data.payer_url;$('payerLink').href=data.payer_url;$('openLink').href=data.payer_url;$('whatsappLink').href='https://wa.me/?text='+encodeURIComponent(`Your PayPal payment request is ready: ${data.payer_url}`);if(data.qr_image){$('qr').src='data:image/png;base64,'+data.qr_image;$('qr').classList.remove('hidden')}else{$('qr').classList.add('hidden')}$('result').classList.remove('hidden');$('invoiceStatus').textContent='Payment request created.'}catch(e){$('invoiceStatus').textContent=e.message}finally{button.disabled=false}};
-    api('/api/admin/session').then(async()=>{$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await loadReservations()}).catch(()=>{});updateTotal();
+    api('/api/admin/session').then(async()=>{$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadReservations(),loadAnalytics()])}).catch(()=>{});updateTotal();
   </script>
 </body>
 </html>
-

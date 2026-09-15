@@ -28,7 +28,7 @@
         <section class="card">
           <h2 class="panel-title">Create a PayPal payment request</h2>
           <label class="field"><span>Customer name</span><input id="customerName" placeholder="Customer name"></label>
-          <label class="field"><span>Customer email <small class="muted">Optional — leave blank for WhatsApp or QR</small></span><input id="customerEmail" type="email" placeholder="customer@example.com"></label>
+          <label class="field"><span>Customer email <small class="muted">Optional — saved for your records</small></span><input id="customerEmail" type="email" placeholder="customer@example.com"></label>
           <label class="field"><span>Course or arrangement</span></label>
           <div class="course-buttons" id="courseButtons">
             <button data-course="₩600,000 Course" data-usd="430"><strong>₩600,000</strong><small>≈ US$430 / guest</small></button>
@@ -47,7 +47,7 @@
           <label class="field"><span>Note</span><textarea id="note" placeholder="Agreed inclusions or temporary arrangement details"></textarea></label>
           <div class="total"><span>Final amount</span><strong id="total">US$0.00</strong></div>
           <button class="primary" id="invoiceButton">Create payment request</button><div class="status" id="invoiceStatus"></div>
-          <div class="result hidden" id="result"><h3 id="resultTitle"></h3><a id="payerLink" target="_blank" rel="noopener"></a><div class="actions"><a id="openLink" target="_blank" rel="noopener">Open payment</a><a id="whatsappLink" target="_blank" rel="noopener">Send by WhatsApp</a></div><img class="qr hidden" id="qr" alt="PayPal invoice QR code"></div>
+          <div class="result hidden" id="result"><h3 id="resultTitle"></h3><a id="payerLink" target="_blank" rel="noopener"></a><div class="actions"><a id="openLink" target="_blank" rel="noopener">Open card / PayPal payment</a><a id="whatsappLink" target="_blank" rel="noopener">Send by WhatsApp</a></div><img class="qr hidden" id="qr" alt="PayPal payment QR code"></div>
         </section>
       </div>
     </section>

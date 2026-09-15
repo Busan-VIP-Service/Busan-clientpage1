@@ -88,6 +88,9 @@ PAYPAL_ENV = os.getenv('PAYPAL_ENV', 'sandbox').lower()
 PAYPAL_API_BASE = 'https://api-m.paypal.com' if PAYPAL_ENV == 'live' else 'https://api-m.sandbox.paypal.com'
 PAYPAL_DEPOSIT_AMOUNT = '50.00'
 PAYPAL_CURRENCY = 'USD'
+# Checkout keeps PayPal and guest card payment on the same hosted page. The
+# Invoicing buyer page can hide guest cards based on account and region rules.
+PAYPAL_ADMIN_USE_CHECKOUT = os.getenv('PAYPAL_ADMIN_USE_CHECKOUT', 'true').lower() in {'1', 'true', 'yes'}
 ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '')
 ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 ADMIN_COOKIE = 'busan_admin_session'
@@ -452,7 +455,7 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     )
     if data.note.strip():
         breakdown += f' · {data.note.strip()}'
-    if not data.customerEmail:
+    if PAYPAL_ADMIN_USE_CHECKOUT or not data.customerEmail:
         base_url = str(request.base_url).rstrip('/')
         order_payload = {
             'intent': 'CAPTURE',
@@ -505,7 +508,7 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
                 (invoice_id, reservation_id, customer_name, customer_email, course_name,
                  total_amount, currency, payer_url, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
-                order_id, data.reservationId, data.customerName.strip(), '',
+                order_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
                 data.courseName.strip(), money(total), 'USD', payer_url, 'created',
             ))
         send_telegram_alert(

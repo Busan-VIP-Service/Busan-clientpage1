@@ -10,20 +10,22 @@ import hmac
 import os
 import re
 import secrets
-import sqlite3
 import smtplib
 import ssl
 import logging
 import time
 import uuid
 import httpx
+import psycopg2
+import psycopg2.extras
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
 ROOT = Path(__file__).resolve().parent
-DB_PATH = Path(os.getenv('BUSAN_DB_PATH', str(ROOT.parent / 'reservations.db')))
+DATABASE_URL = os.getenv('DATABASE_URL', '')
+
 app = FastAPI(title='Busan Private Concierge · Direct Booking')
 logger = logging.getLogger(__name__)
 app.add_middleware(
@@ -38,7 +40,6 @@ app.add_middleware(
 @app.get('/api/health')
 def health():
     return {'status': 'ok'}
-
 
 # Enable email notifications after configuring a sending SMTP account.
 EMAIL_ALERT_ENABLED = os.getenv('EMAIL_ALERT_ENABLED', 'false').lower() in {'1', 'true', 'yes'}
@@ -75,10 +76,8 @@ def send_email_alert(text: str, reservation_id: int, subject: str):
             server.login(username, password)
             server.send_message(message)
     except Exception as exc:
-        # Keep the saved reservation even when the notification service fails.
         logger.warning('Email alert failed (%s), reservation #%s remains saved.', type(exc).__name__, reservation_id)
 
-# 텔레그램 봇 설정 (환경 변수 또는 여기에 직접 토큰과 챗ID를 박아도 됩니다)
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
 
@@ -88,8 +87,6 @@ PAYPAL_ENV = os.getenv('PAYPAL_ENV', 'sandbox').lower()
 PAYPAL_API_BASE = 'https://api-m.paypal.com' if PAYPAL_ENV == 'live' else 'https://api-m.sandbox.paypal.com'
 PAYPAL_DEPOSIT_AMOUNT = '50.00'
 PAYPAL_CURRENCY = 'USD'
-# Checkout keeps PayPal and guest card payment on the same hosted page. The
-# Invoicing buyer page can hide guest cards based on account and region rules.
 PAYPAL_ADMIN_USE_CHECKOUT = os.getenv('PAYPAL_ADMIN_USE_CHECKOUT', 'true').lower() in {'1', 'true', 'yes'}
 ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '')
 ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
@@ -98,37 +95,44 @@ ADMIN_SESSION_SECONDS = 30 * 24 * 60 * 60
 ADMIN_LOGIN_ATTEMPTS: dict[str, list[float]] = {}
 
 def connect_db():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(DB_PATH, timeout=15)
-    db.row_factory = sqlite3.Row
-    db.execute('''CREATE TABLE IF NOT EXISTS reservations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, company TEXT, job_title TEXT,
-        visit_date TEXT, party_size TEXT, vibe TEXT, budget TEXT, guide_type TEXT,
-        hotel TEXT, phone TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    columns = {row[1] for row in db.execute('PRAGMA table_info(reservations)')}
-    for name, definition in {
-        'paypal_order_id': 'TEXT', 'paypal_capture_id': 'TEXT',
-        'deposit_amount': 'TEXT', 'deposit_currency': 'TEXT', 'payment_status': 'TEXT'
-    }.items():
-        if name not in columns:
-            db.execute(f'ALTER TABLE reservations ADD COLUMN {name} {definition}')
-    db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_paypal_order ON reservations(paypal_order_id)')
-    db.execute('''CREATE TABLE IF NOT EXISTS pending_paypal_orders (
-        order_id TEXT PRIMARY KEY, reservation_json TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    db.execute('''CREATE TABLE IF NOT EXISTS admin_invoices (
-        invoice_id TEXT PRIMARY KEY, reservation_id INTEGER, customer_name TEXT,
-        customer_email TEXT, course_name TEXT, total_amount TEXT, currency TEXT,
-        payer_url TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    if not DATABASE_URL:
+        raise HTTPException(500, 'DATABASE_URL environment variable is not configured.')
+    db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    with db.cursor() as cursor:
+        cursor.execute('''CREATE TABLE IF NOT EXISTS reservations (
+            id SERIAL PRIMARY KEY, name TEXT, company TEXT, job_title TEXT,
+            visit_date TEXT, party_size TEXT, vibe TEXT, budget TEXT, guide_type TEXT,
+            hotel TEXT, phone TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'reservations'")
+        columns = {row['column_name'] for row in cursor.fetchall()}
+        for name, definition in {
+            'paypal_order_id': 'TEXT', 'paypal_capture_id': 'TEXT',
+            'deposit_amount': 'TEXT', 'deposit_currency': 'TEXT', 'payment_status': 'TEXT'
+        }.items():
+            if name not in columns:
+                cursor.execute(f'ALTER TABLE reservations ADD COLUMN {name} {definition}')
+                
+        cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_paypal_order ON reservations(paypal_order_id)')
+        
+        cursor.execute('''CREATE TABLE IF NOT EXISTS pending_paypal_orders (
+            order_id TEXT PRIMARY KEY, reservation_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+            
+        cursor.execute('''CREATE TABLE IF NOT EXISTS admin_invoices (
+            invoice_id TEXT PRIMARY KEY, reservation_id INTEGER, customer_name TEXT,
+            customer_email TEXT, course_name TEXT, total_amount TEXT, currency TEXT,
+            payer_url TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     db.commit()
     return db
 
 
 def analytics_db():
     db = connect_db()
-    db.execute('''CREATE TABLE IF NOT EXISTS page_views (
-        event_id TEXT PRIMARY KEY, day TEXT NOT NULL, source TEXT NOT NULL)''')
-    db.execute('CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day)')
+    with db.cursor() as cursor:
+        cursor.execute('''CREATE TABLE IF NOT EXISTS page_views (
+            event_id TEXT PRIMARY KEY, day TEXT NOT NULL, source TEXT NOT NULL)''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day)')
     db.commit()
     return db
 
@@ -141,7 +145,6 @@ class PageViewRequest(BaseModel):
 
 @app.post('/api/analytics/page-view', status_code=204)
 def record_page_view(data: PageViewRequest, request: Request):
-    # Only instrumented browser loads count; admin browsing is excluded.
     if request.headers.get('x-busan-request') != '1':
         raise HTTPException(400, 'Browser request required.')
     if re.search(r'bot|crawler|spider|headless', request.headers.get('user-agent', ''), re.I):
@@ -152,9 +155,9 @@ def record_page_view(data: PageViewRequest, request: Request):
     except HTTPException:
         pass
     day = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
-    with closing(analytics_db()) as db, db:
-        db.execute('INSERT OR IGNORE INTO page_views VALUES (?, ?, ?)',
-                   (data.event_id, day, data.source))
+    with closing(analytics_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('INSERT INTO page_views (event_id, day, source) VALUES (%s, %s, %s) ON CONFLICT (event_id) DO NOTHING',
+                       (data.event_id, day, data.source))
     return Response(status_code=204)
 
 
@@ -164,15 +167,19 @@ def admin_analytics(request: Request, response: Response):
     response.headers['Cache-Control'] = 'no-store'
     today = datetime.now(timezone(timedelta(hours=9))).date()
     start = (today - timedelta(days=29)).isoformat()
-    with closing(analytics_db()) as db:
-        totals = dict(db.execute('''SELECT COUNT(*) AS total,
-            COALESCE(SUM(day = ?), 0) AS today,
-            COALESCE(SUM(day >= ?), 0) AS week, MIN(day) AS started
-            FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat())).fetchone())
-        counts = {r['day']: r['views'] for r in db.execute(
-            'SELECT day, COUNT(*) AS views FROM page_views WHERE day >= ? GROUP BY day', (start,))}
-        sources = {r['source']: r['views'] for r in db.execute(
-            'SELECT source, COUNT(*) AS views FROM page_views WHERE day >= ? GROUP BY source', (start,))}
+    with closing(analytics_db()) as db, db.cursor() as cursor:
+        cursor.execute('''SELECT COUNT(*) AS total,
+            COALESCE(SUM(CASE WHEN day = %s THEN 1 ELSE 0 END), 0) AS today,
+            COALESCE(SUM(CASE WHEN day >= %s THEN 1 ELSE 0 END), 0) AS week, MIN(day) AS started
+            FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat()))
+        totals = dict(cursor.fetchone())
+        
+        cursor.execute('SELECT day, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY day', (start,))
+        counts = {r['day']: r['views'] for r in cursor.fetchall()}
+        
+        cursor.execute('SELECT source, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY source', (start,))
+        sources = {r['source']: r['views'] for r in cursor.fetchall()}
+        
     return {**totals, 'days': [{'day': (today - timedelta(days=i)).isoformat(),
             'views': counts.get((today - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
             'sources': sources}
@@ -333,9 +340,9 @@ def create_paypal_order(data: ReservationRequest):
     except Exception as exc:
         logger.warning('PayPal order creation failed (%s).', type(exc).__name__)
         raise HTTPException(502, 'Unable to create the PayPal order.') from exc
-    with closing(connect_db()) as db, db:
-        db.execute(
-            'INSERT OR REPLACE INTO pending_paypal_orders (order_id, reservation_json) VALUES (?, ?)',
+    with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute(
+            'INSERT INTO pending_paypal_orders (order_id, reservation_json) VALUES (%s, %s) ON CONFLICT (order_id) DO UPDATE SET reservation_json = EXCLUDED.reservation_json',
             (order_id, data.model_dump_json()),
         )
     return {'order_id': order_id}
@@ -345,11 +352,13 @@ def create_paypal_order(data: ReservationRequest):
 def capture_paypal_order(order_id: str):
     if not re.fullmatch(r'[A-Z0-9]{8,32}', order_id):
         raise HTTPException(422, 'Invalid PayPal order ID.')
-    with closing(connect_db()) as db:
-        existing = db.execute('SELECT id, paypal_capture_id FROM reservations WHERE paypal_order_id = ?', (order_id,)).fetchone()
+    with closing(connect_db()) as db, db.cursor() as cursor:
+        cursor.execute('SELECT id, paypal_capture_id FROM reservations WHERE paypal_order_id = %s', (order_id,))
+        existing = cursor.fetchone()
         if existing:
             return {'status': 'success', 'reservation_id': existing['id'], 'capture_id': existing['paypal_capture_id'], 'whatsapp_url': None}
-        pending = db.execute('SELECT reservation_json FROM pending_paypal_orders WHERE order_id = ?', (order_id,)).fetchone()
+        cursor.execute('SELECT reservation_json FROM pending_paypal_orders WHERE order_id = %s', (order_id,))
+        pending = cursor.fetchone()
     if not pending:
         raise HTTPException(404, 'Reservation details for this PayPal order were not found.')
     try:
@@ -375,17 +384,17 @@ def capture_paypal_order(order_id: str):
         raise HTTPException(502, 'PayPal could not confirm the payment.') from exc
 
     data = ReservationRequest.model_validate_json(pending['reservation_json'])
-    with closing(connect_db()) as db, db:
-        cursor = db.execute('''INSERT INTO reservations
+    with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
              paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency, payment_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
             'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(),
             order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY, 'paid',
         ))
-        reservation_id = cursor.lastrowid
-        db.execute('DELETE FROM pending_paypal_orders WHERE order_id = ?', (order_id,))
+        reservation_id = cursor.fetchone()['id']
+        cursor.execute('DELETE FROM pending_paypal_orders WHERE order_id = %s', (order_id,))
     send_paid_reservation_alert(data, reservation_id, capture_id)
     return {
         'status': 'success', 'reservation_id': reservation_id, 'capture_id': capture_id,
@@ -397,15 +406,15 @@ def capture_paypal_order(order_id: str):
 def create_unpaid_reservation(data: ReservationRequest):
     if not data.name.strip() or not data.hotel.strip() or not data.phone.strip():
         raise HTTPException(422, 'Name, hotel, and phone number are required.')
-    with closing(connect_db()) as db, db:
-        cursor = db.execute('''INSERT INTO reservations
+    with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
              payment_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
             'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'unpaid',
         ))
-        reservation_id = cursor.lastrowid
+        reservation_id = cursor.fetchone()['id']
     text = (
         f'[무료 상담 요청] WhatsApp 문의 #{reservation_id}\n'
         f'이름: {data.name}\n'
@@ -463,10 +472,11 @@ def admin_logout(request: Request, response: Response):
 @app.get('/api/admin/reservations')
 def admin_reservations(request: Request):
     require_admin(request)
-    with closing(connect_db()) as db:
-        rows = db.execute('''SELECT id, name, visit_date, party_size, budget, hotel, phone,
+    with closing(connect_db()) as db, db.cursor() as cursor:
+        cursor.execute('''SELECT id, name, visit_date, party_size, budget, hotel, phone,
             payment_status, deposit_amount, deposit_currency, created_at
-            FROM reservations ORDER BY id DESC LIMIT 100''').fetchall()
+            FROM reservations ORDER BY id DESC LIMIT 100''')
+        rows = cursor.fetchall()
     return {'reservations': [dict(row) for row in rows]}
 
 
@@ -557,11 +567,16 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
         except Exception as exc:
             logger.warning('Admin PayPal order creation failed (%s).', type(exc).__name__)
             raise HTTPException(502, 'PayPal could not create this payment request.') from exc
-        with closing(connect_db()) as db, db:
-            db.execute('''INSERT OR REPLACE INTO admin_invoices
+        with closing(connect_db()) as db, db, db.cursor() as cursor:
+            cursor.execute('''INSERT INTO admin_invoices
                 (invoice_id, reservation_id, customer_name, customer_email, course_name,
                  total_amount, currency, payer_url, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (invoice_id) DO UPDATE SET 
+                reservation_id = EXCLUDED.reservation_id, customer_name = EXCLUDED.customer_name,
+                customer_email = EXCLUDED.customer_email, course_name = EXCLUDED.course_name,
+                total_amount = EXCLUDED.total_amount, currency = EXCLUDED.currency,
+                payer_url = EXCLUDED.payer_url, status = EXCLUDED.status''', (
                 order_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
                 data.courseName.strip(), money(total), 'USD', payer_url, 'created',
             ))
@@ -573,6 +588,7 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
             'invoice_id': order_id, 'total': money(total), 'currency': 'USD',
             'payer_url': payer_url, 'qr_image': '', 'request_type': 'order',
         }
+    
     recipient = {'billing_info': {'name': {'given_name': data.customerName.strip()[:140]}}}
     if data.customerEmail:
         recipient['billing_info']['email_address'] = data.customerEmail.strip()
@@ -667,11 +683,16 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     except Exception as exc:
         logger.warning('Admin invoice creation failed (%s).', type(exc).__name__)
         raise HTTPException(502, 'PayPal could not create this invoice.') from exc
-    with closing(connect_db()) as db, db:
-        db.execute('''INSERT OR REPLACE INTO admin_invoices
+    with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('''INSERT INTO admin_invoices
             (invoice_id, reservation_id, customer_name, customer_email, course_name,
              total_amount, currency, payer_url, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (invoice_id) DO UPDATE SET 
+            reservation_id = EXCLUDED.reservation_id, customer_name = EXCLUDED.customer_name,
+            customer_email = EXCLUDED.customer_email, course_name = EXCLUDED.course_name,
+            total_amount = EXCLUDED.total_amount, currency = EXCLUDED.currency,
+            payer_url = EXCLUDED.payer_url, status = EXCLUDED.status''', (
             invoice_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
             data.courseName.strip(), money(total), 'USD', payer_url, 'unpaid',
         ))
@@ -689,9 +710,10 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
 def complete_admin_order(token: str):
     if not re.fullmatch(r'[A-Z0-9]{8,32}', token):
         raise HTTPException(422, 'Invalid PayPal order ID.')
-    with closing(connect_db()) as db:
-        order = db.execute('''SELECT invoice_id, customer_name, course_name, total_amount, currency, status
-            FROM admin_invoices WHERE invoice_id = ?''', (token,)).fetchone()
+    with closing(connect_db()) as db, db.cursor() as cursor:
+        cursor.execute('''SELECT invoice_id, customer_name, course_name, total_amount, currency, status
+            FROM admin_invoices WHERE invoice_id = %s''', (token,))
+        order = cursor.fetchone()
     if not order:
         raise HTTPException(404, 'Payment request not found.')
     if order['status'] != 'paid':
@@ -716,8 +738,8 @@ def complete_admin_order(token: str):
         except Exception as exc:
             logger.warning('Admin PayPal capture failed for %s (%s).', token, type(exc).__name__)
             raise HTTPException(502, 'PayPal could not confirm this payment.') from exc
-        with closing(connect_db()) as db, db:
-            db.execute("UPDATE admin_invoices SET status = 'paid' WHERE invoice_id = ?", (token,))
+        with closing(connect_db()) as db, db, db.cursor() as cursor:
+            cursor.execute("UPDATE admin_invoices SET status = 'paid' WHERE invoice_id = %s", (token,))
         send_telegram_alert(
             f'[결제 완료] {token}\n고객: {order["customer_name"]}\n'
             f'코스: {order["course_name"]}\n결제 금액: US${order["total_amount"]}'

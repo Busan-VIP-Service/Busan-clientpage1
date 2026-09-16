@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busan Private Nightlife Concierge | Midnight Sunrise Busan</title>
-    <meta name="description" content="Private VIP nightlife experiences in Busan with venue arrangements and professional English interpretation. Chat on WhatsApp or confirm your reservation online.">
+    <meta name="description" content="Private VIP nightlife experiences in Busan with venue arrangements and professional English interpretation. Submit a free reservation and continue on WhatsApp.">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <link rel="canonical" href="https://midnightsunrisebusan.com/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://midnightsunrisebusan.com/">
     <meta property="og:title" content="Busan Private Nightlife Concierge | Midnight Sunrise Busan">
     <meta property="og:description" content="Private VIP nightlife experiences in Busan with venue arrangements and professional English interpretation.">
-    <meta property="og:image" content="https://midnightsunrisebusan.com/main.png">
+    <meta property="og:image" content="https://midnightsunrisebusan.com/midnightbusan.png">
     <meta property="og:site_name" content="Midnight Sunrise Busan">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Busan Private Nightlife Concierge | Midnight Sunrise Busan">
     <meta name="twitter:description" content="Private VIP nightlife experiences in Busan, arranged around you.">
-    <meta name="twitter:image" content="https://midnightsunrisebusan.com/main.png">
+    <meta name="twitter:image" content="https://midnightsunrisebusan.com/midnightbusan.png">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -26,7 +26,7 @@
           "@id": "https://midnightsunrisebusan.com/#organization",
           "name": "Midnight Sunrise Busan",
           "url": "https://midnightsunrisebusan.com/",
-          "logo": "https://midnightsunrisebusan.com/main.png"
+          "logo": "https://midnightsunrisebusan.com/midnightbusan.png"
         },
         {
           "@type": "Service",
@@ -49,17 +49,11 @@
             width: 100vw; min-height: 100vh; -webkit-user-select: none; user-select: none;
         }
         .wrapper { width: 100vw; min-height: 100vh; background: #161616; display: flex; flex-direction: column; }
-        .slider-container {
+        .hero-image {
             width: 100%; height: clamp(320px, 48svh, 560px); position: relative; overflow: hidden; flex-shrink: 0;
-            isolation: isolate; background: #101014; touch-action: pan-y;
+            background: #101014;
         }
-        .slider-container::before {
-            content: ''; position: absolute; inset: -32px; z-index: -1;
-            background-image: var(--gallery-backdrop); background-position: center; background-size: cover;
-            filter: blur(24px) brightness(0.35); pointer-events: none;
-        }
-        .slides { display: flex; width: 100%; height: 100%; transition: transform 0.5s ease-in-out; position: relative; }
-        .slides img { width: 100%; flex: 0 0 100%; height: 100%; object-fit: contain; object-position: center; padding: 0; pointer-events: none; }
+        .hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
         .content { padding: 24px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         h2 { margin: 0 0 4px 0; font-size: 22px; letter-spacing: 0.5px; color: #f3f3f3; }
         .subtitle { font-size: 12px; color: #d4af37; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
@@ -77,24 +71,10 @@
         }
         .options-vertical { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
         .option-vertical-item label { padding: 10px 14px; text-align: left; }
-        .payment-note {
-            margin: 9px 0 5px; padding: 11px 12px; border: 1px solid rgba(212, 175, 55, 0.45);
-            border-radius: 8px; background: rgba(212, 175, 55, 0.08); color: #ddd;
-            font-size: 12px; line-height: 1.5;
-        }
-        .payment-note strong { color: #d4af37; }
         .usd-price {
             display: inline-block; margin-left: 7px; color: #f1d675;
             font-size: 13px; font-weight: 800; letter-spacing: 0.2px;
         }
-        .deposit-card {
-            margin: 14px 0 4px; padding: 15px; border: 1px solid #d4af37;
-            border-radius: 10px; background: linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
-        }
-        .deposit-card strong { display: block; color: #f1d675; font-size: 17px; margin-bottom: 5px; }
-        .deposit-card p { margin: 0; color: #ccc; font-size: 12px; line-height: 1.55; }
-        #paypal-button-container { min-height: 45px; }
-        .payment-status { min-height: 20px; margin-top: 8px; color: #bbb; font-size: 12px; line-height: 1.4; }
         .modal-cancel { margin-top: 10px; border: 0; background: transparent; color: #999; cursor: pointer; }
         input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
@@ -140,22 +120,11 @@
         .consult-action:hover { background: linear-gradient(135deg, #31b965, #24894c); }
         .consult-status { min-height: 18px; margin-top: 10px; color: #9fcaaa; font-size: 11px; line-height: 1.4; }
         .required-star { color: #ff4d4d; font-weight: bold; }
-        .slider-arrow {
-            position: absolute; z-index: 11; border: 1px solid #ffffff66; background: #0009; color: white; cursor: pointer; border-radius: 24px;
-            min-width: 44px; min-height: 44px; top: 50%; transform: translateY(-50%); font-size: 28px;
-        }
-        .slider-prev { left: 12px; } .slider-next { right: 12px; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
             body { overflow: hidden; }
             .wrapper { flex-direction: row; height: 100vh; }
-            .slider-container { width: 55%; height: 100vh; }
+            .hero-image { width: 55%; height: 100vh; }
             .content { width: 45%; height: 100vh; padding: 40px; }
-            .mobile-only-slide { display: none !important; }
-            .pc-only-slide { display: block !important; }
-        }
-        @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
-            .mobile-only-slide { display: block !important; }
-            .pc-only-slide { display: none !important; }
         }
 
         /* Reservation console */
@@ -207,13 +176,12 @@
         .course-preview h4 { margin: 7px 0 10px; color: #f0e3c3; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 20px; font-weight: 500; }
         .course-preview-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px -16px 14px; }
         .course-preview-gallery.single { grid-template-columns: 1fr; }
-        .course-preview-gallery img { display: block; width: 100%; height: auto; max-height: none; border-radius: 0; object-fit: contain; object-position: center; border: 0; background: #111; }
-        .course-preview-gallery.single img { height: auto; }
+        .course-preview-gallery img { display: block; width: 100%; height: auto; border: 0; background: #111; object-fit: contain; object-position: center; }
         .venue-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
         .venue-types span { padding: 6px 9px; border: 1px solid #55594b; border-radius: 999px; color: #d6d9d1; background: #292d27; font-size: 11px; }
         .course-preview p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
         .course-preview small { display: block; margin-top: 9px; color: #857f70; font-size: 10px; line-height: 1.45; }
-        @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } .course-preview-gallery img, .course-preview-gallery.single img { height: auto; } }
+        @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } }
         .content .contact-group { margin: 0; }
         .content .contact-group select { flex: 0 0 100px; min-width: 0; }
         .content .contact-group input { flex: 1; min-width: 0; }
@@ -250,27 +218,8 @@
 <body>
 
     <div class="wrapper">
-        <div class="slider-container" id="sliderContainer" role="region" aria-label="Busan photo gallery" aria-roledescription="carousel" tabindex="0">
-            <div class="slides" id="slidesTrack">
-                <img src="mobile_main.png" class="mobile-only-slide" alt="Busan Private Concierge Mobile" draggable="false" decoding="async" fetchpriority="high">
-                <img src="main.png" class="pc-only-slide" alt="Busan Private Concierge PC" draggable="false" decoding="async" fetchpriority="high" style="display:none;">
-                <img src="image1 (1).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (2).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (3).png" alt="Busan concierge gallery photo" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (4).png" alt="Busan concierge gallery photo 4" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (5).png" alt="Busan concierge gallery photo 5" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (6).png" alt="Busan concierge gallery photo 6" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (7).png" alt="Busan concierge gallery photo 7" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (8).png" alt="Busan concierge gallery photo 8" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (9).png" alt="Busan concierge gallery photo 9" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (10).png" alt="Busan concierge gallery photo 10" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (11).png" alt="Busan concierge gallery photo 11" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (12).png" alt="Busan concierge gallery photo 12" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (13).png" alt="Busan concierge gallery photo 13" draggable="false" decoding="async" loading="lazy">
-                <img src="image1 (14).png" alt="Busan concierge gallery photo 14" draggable="false" decoding="async" loading="lazy">
-            </div>
-            <button class="slider-arrow slider-prev" id="prevSlide" type="button" aria-label="Previous photo">&#8249;</button>
-            <button class="slider-arrow slider-next" id="nextSlide" type="button" aria-label="Next photo">&#8250;</button>
+        <div class="hero-image">
+            <img src="midnightbusan.png" alt="Midnight Sunrise Busan private nightlife concierge" decoding="async" fetchpriority="high">
         </div>
 
         <div class="content" id="formContent">
@@ -295,7 +244,7 @@
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 240, 180, 0.15);
             transition: all 0.25s ease;
     " onmouseover="this.style.borderColor='#d4af37'; this.style.boxShadow='0 6px 24px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 240, 180, 0.3)';" onmouseout="this.style.borderColor='rgba(212, 175, 55, 0.38)'; this.style.boxShadow='0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 240, 180, 0.15)';">
-        
+
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(212, 175, 55, 0.2); color: #f1d675; font-size: 11px;">✦</span>
             <div style="text-align: left;">
@@ -371,30 +320,18 @@
                 </details>
             </section>
 
-            <section class="booking-checkout" aria-label="Booking and payment">
-                <div class="deposit-row"><span>Talk first. Pay when you're ready.</span></div>
-                <!-- 교체할 코드 -->
-                <button type="button" class="whatsapp-btn" onclick="window.open('https://wa.me/821057537309?text=Hello%2C%20I%20have%20inquiries%20about%20Midnight%20Sunrise%20Busan.', '_blank')">Chat on WhatsApp <span>Free consultation</span></button>
-                <button type="button" class="submit-btn" onclick="openPaymentModal()">Confirm My Reservation — US$50 <span aria-hidden="true">→</span></button>
+            <section class="booking-checkout" aria-label="Free reservation">
+                <div class="deposit-row"><span>Reserve now at no charge.</span></div>
+                <button type="button" class="whatsapp-btn" onclick="openWhatsAppChat()">Chat on WhatsApp <span>No form required</span></button>
+                <button type="button" class="submit-btn" onclick="openFreeReservationModal()">Reserve for Free <span aria-hidden="true">→</span></button>
                 <div class="booking-terms">
-                    <p>Payment starts venue and interpreter arrangements.</p>
-                    <p>US$50 confirms your reservation.</p>
-                    <p>It is deducted from your final balance.</p>
-                    <p>Balance: cash (KRW) on the day.</p>
+                    <p>No deposit or online payment is required.</p>
+                    <p>Submit your request free of charge.</p>
+                    <p>Your concierge will confirm availability and final details on WhatsApp.</p>
+                    <p>Course and interpreter fees are paid separately after confirmation.</p>
                 </div>
             </section>
             </div>
-        </div>
-    </div>
-
-    <!-- 확인 모달 -->
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal-box">
-            <div class="modal-title">Secure Your Reservation</div>
-            <div class="modal-desc" id="confirmText">US$50 confirms your reservation and is deducted from your final balance.</div>
-            <div id="paypal-button-container"></div>
-            <div class="payment-status" id="paymentStatus"></div>
-            <button class="modal-cancel" type="button" onclick="closePaymentModal()">Back to form</button>
         </div>
     </div>
 
@@ -403,85 +340,17 @@
             <div class="consult-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-8.5 8L5 21l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg>
             </div>
-            <div class="modal-title" id="whatsappModalTitle">Chat Before You Book</div>
-            <div class="consult-copy"><strong>WhatsApp consultation is complimentary.</strong><span>US$50 confirms your reservation and is deducted from your final balance.</span></div>
-            <button class="consult-action" id="consultContinue" type="button" onclick="submitWhatsAppInquiry()">Continue to WhatsApp →</button>
+            <div class="modal-title" id="whatsappModalTitle">Complete Your Free Reservation</div>
+            <div class="consult-copy"><strong>No deposit or online payment is required.</strong><span>We'll save your request and continue with availability and details on WhatsApp.</span></div>
+            <button class="consult-action" id="consultContinue" type="button" onclick="submitWhatsAppInquiry()">Reserve Free &amp; Continue →</button>
             <div class="consult-status" id="consultStatus"></div>
             <button class="modal-cancel" type="button" onclick="closeWhatsAppModal()">Back</button>
         </div>
     </div>
 
     <script>
-        let currentIndex = 0;
-        const track = document.getElementById('slidesTrack');
-        const gallery = document.getElementById('sliderContainer');
-        const originalPhotos = Array.from(track.querySelectorAll('img'));
-        let photos = [];
-        let moving = false;
-        let autoSlideTimer;
-
-        function updateSlidePosition(withTransition = true) {
-            if (!photos.length) return;
-            const activePhoto = photos[(currentIndex + photos.length) % photos.length];
-            gallery.style.setProperty('--gallery-backdrop', `url("${activePhoto.currentSrc || activePhoto.src}")`);
-            track.style.transition = withTransition ? 'transform 0.5s ease-in-out' : 'none';
-            track.style.transform = `translateX(-${(currentIndex + 1) * 100}%)`;
-        }
-
-        function rebuildGallery() {
-            track.querySelectorAll('[data-loop-clone]').forEach(photo => photo.remove());
-            photos = originalPhotos.filter(photo => getComputedStyle(photo).display !== 'none');
-            if (!photos.length) return;
-            currentIndex = (currentIndex + photos.length) % photos.length;
-            function clone(photo) {
-                const copy = photo.cloneNode(true);
-                copy.removeAttribute('class');
-                copy.removeAttribute('id');
-                copy.style.display = 'block';
-                copy.dataset.loopClone = 'true';
-                copy.setAttribute('aria-hidden', 'true');
-                copy.loading = 'eager';
-                return copy;
-            }
-            track.prepend(clone(photos[photos.length - 1]));
-            track.append(clone(photos[0]));
-            moving = false;
-            updateSlidePosition(false);
-        }
-
-        function moveSlide(direction) {
-            if (moving || photos.length < 2) return;
-            moving = true;
-            currentIndex += direction;
-            updateSlidePosition(true);
-        }
-
-        track.addEventListener('transitionend', event => {
-            if (event.target !== track || event.propertyName !== 'transform') return;
-            if (currentIndex < 0 || currentIndex >= photos.length) {
-                currentIndex = (currentIndex + photos.length) % photos.length;
-                updateSlidePosition(false);
-                // Commit the invisible reset before accepting another movement.
-                void track.offsetWidth;
-            }
-            moving = false;
-        });
-
-        function restartAutoSlide() {
-            clearInterval(autoSlideTimer);
-            autoSlideTimer = setInterval(() => moveSlide(1), 5000);
-        }
-        window.addEventListener('resize', rebuildGallery);
-        document.getElementById('prevSlide').addEventListener('click', () => { moveSlide(-1); restartAutoSlide(); });
-        document.getElementById('nextSlide').addEventListener('click', () => { moveSlide(1); restartAutoSlide(); });
-        rebuildGallery();
-        restartAutoSlide();
-
-
         const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
         const field = id => document.getElementById(id).value.trim();
-        let paypalReady = false;
-        let paypalButtons = null;
 
         const coursePreviews = {
             '600000 KRW per guest': {
@@ -542,7 +411,7 @@
         function validateReservation() {
             const data = reservationData();
             if (!data.name || !data.visitDate || !data.partySize || !data.budget || !data.hotel || !field('contactInput')) {
-                alert('Please complete all required fields before continuing to payment.');
+                alert('Please complete all required fields before submitting your free reservation.');
                 return false;
             }
             return true;
@@ -550,71 +419,17 @@
 
         async function apiJson(path, options = {}) {
             const response = await fetch(window.busanApiUrl(path), options);
-            if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('The payment service is unavailable.');
+            if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('The reservation service is unavailable.');
             const result = await response.json();
-            if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Unable to process payment.');
+            if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Unable to submit your reservation.');
             return result;
         }
 
-        function loadPayPalSdk(clientId) {
-            if (window.paypal) return Promise.resolve();
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&components=buttons`;
-                script.onload = resolve;
-                script.onerror = () => reject(new Error('Unable to load PayPal. Please try again.'));
-                document.head.appendChild(script);
-            });
+        function openWhatsAppChat() {
+            window.location.href = window.busanApiUrl('/api/whatsapp');
         }
 
-        async function preparePayPal() {
-            const container = document.getElementById('paypal-button-container');
-            if (paypalReady && container.childElementCount) return;
-            const status = document.getElementById('paymentStatus');
-            status.textContent = 'Loading secure PayPal checkout…';
-            const config = await apiJson('/api/paypal/config');
-            if (!config.enabled || !config.client_id) throw new Error('PayPal checkout is being configured. Please contact the concierge.');
-            await loadPayPalSdk(config.client_id);
-            container.replaceChildren();
-            paypalButtons = window.paypal.Buttons({
-                style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
-                createOrder: async () => {
-                    if (!validateReservation()) throw new Error('Please check the reservation form.');
-                    status.textContent = 'Creating your secure US$50 deposit…';
-                    const order = await apiJson('/api/paypal/orders', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' },
-                        body: JSON.stringify(reservationData())
-                    });
-                    return order.order_id;
-                },
-                onApprove: async data => {
-                    status.textContent = 'Confirming your payment…';
-                    const result = await apiJson(`/api/paypal/orders/${encodeURIComponent(data.orderID)}/capture`, {
-                        method: 'POST', headers: { 'x-busan-request': '1' }
-                    });
-                    status.textContent = `Reservation #${result.reservation_id} confirmed. Your US$50 deposit was received.`;
-                    if (result.whatsapp_url && confirm('Payment received! Click OK to connect with your concierge on WhatsApp.')) {
-                        window.open(result.whatsapp_url, '_blank');
-                    }
-                    setTimeout(() => location.reload(), 1200);
-                },
-                onCancel: () => { status.textContent = 'Payment was cancelled. Your reservation has not been submitted.'; },
-                onError: error => { status.textContent = error.message || 'Payment could not be completed. Please try again.'; }
-            });
-            await paypalButtons.render(container);
-            paypalReady = true;
-            status.textContent = '';
-        }
-
-        async function openPaymentModal() {
-            if (!validateReservation()) return;
-            document.getElementById('confirmText').textContent = `${field('nameInput')} · ${field('dateInput')}. US$50 confirms your reservation and is deducted from your final balance.`;
-            document.getElementById('confirmModal').classList.add('active');
-            try { await preparePayPal(); }
-            catch (error) { document.getElementById('paymentStatus').textContent = error.message; }
-        }
-
-        function continueWithoutPayment() {
+        function openFreeReservationModal() {
             if (!validateReservation()) return;
             document.getElementById('consultStatus').textContent = '';
             document.getElementById('whatsappModal').classList.add('active');
@@ -626,7 +441,7 @@
             const status = document.getElementById('consultStatus');
             buttons.forEach(button => button.disabled = true);
             action.disabled = true;
-            status.textContent = 'Preparing your WhatsApp consultation…';
+            status.textContent = 'Submitting your free reservation…';
             try {
                 const result = await apiJson('/api/reservation', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' },
@@ -650,13 +465,6 @@
             document.getElementById('whatsappModal').classList.remove('active');
         }
 
-        function closePaymentModal() {
-            document.getElementById('confirmModal').classList.remove('active');
-            document.getElementById('paypal-button-container').replaceChildren();
-            document.getElementById('paymentStatus').textContent = '';
-            paypalButtons = null;
-            paypalReady = false;
-        }
     </script>
 </body>
 </html>

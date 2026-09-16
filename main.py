@@ -40,6 +40,14 @@ app.add_middleware(
 @app.get('/api/health')
 def health():
     return {'status': 'ok'}
+    
+@app.get('/guide.html')
+def get_guide():
+    return FileResponse('guide.html')
+
+@app.get('/guide')
+def get_guide_clean():
+    return FileResponse('guide.html')
 
 # Enable email notifications after configuring a sending SMTP account.
 EMAIL_ALERT_ENABLED = os.getenv('EMAIL_ALERT_ENABLED', 'false').lower() in {'1', 'true', 'yes'}

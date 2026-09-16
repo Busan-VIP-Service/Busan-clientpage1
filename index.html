@@ -119,6 +119,20 @@
         .consult-action { width: 100%; border: 1px solid #47bc70; border-radius: 7px; padding: 14px; background: linear-gradient(135deg, #2aa75b, #207c45); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(37, 211, 102, .16); }
         .consult-action:hover { background: linear-gradient(135deg, #31b965, #24894c); }
         .consult-status { min-height: 18px; margin-top: 10px; color: #9fcaaa; font-size: 11px; line-height: 1.4; }
+        .validation-modal-box {
+            position: relative; overflow: hidden; max-width: 390px; padding: 30px 28px 26px;
+            background: radial-gradient(circle at 50% 0, rgba(212, 175, 55, .18), transparent 44%), #1b1c19;
+            border-color: rgba(212, 175, 55, .42); box-shadow: 0 28px 70px rgba(0, 0, 0, .74), 0 0 34px rgba(212, 175, 55, .08);
+        }
+        .validation-modal-box::before { content: ''; position: absolute; inset: 0 16% auto; height: 1px; background: linear-gradient(90deg, transparent, #f2d683, transparent); }
+        .validation-icon { width: 50px; height: 50px; margin: 0 auto 17px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #d6b75d; background: rgba(212, 175, 55, .13); color: #f0d477; font-family: Georgia, serif; font-size: 27px; box-shadow: 0 0 24px rgba(212, 175, 55, .12); }
+        .validation-modal-box .modal-title { color: #f4ead0; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 24px; font-weight: 500; }
+        .validation-copy { margin: 0 0 15px; color: #aeb4ad; font-size: 13px; line-height: 1.55; }
+        .missing-fields { margin: 0 0 20px; padding: 12px 14px; border: 1px solid #474a3f; border-radius: 8px; background: #20231f; text-align: left; list-style: none; }
+        .missing-fields li { position: relative; padding: 5px 0 5px 19px; color: #ded8c8; font-size: 12px; }
+        .missing-fields li::before { content: ''; position: absolute; left: 1px; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: #d5b657; box-shadow: 0 0 7px rgba(213, 182, 87, .5); }
+        .validation-action { width: 100%; border: 1px solid #e0c36f; border-radius: 7px; padding: 14px; background: linear-gradient(110deg, #936b20, #e0bd61 48%, #a87824); color: #18130a; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .validation-action:hover { filter: brightness(1.08); }
         .required-star { color: #ff4d4d; font-weight: bold; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
             body { overflow: hidden; }
@@ -244,7 +258,7 @@
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 240, 180, 0.15);
             transition: all 0.25s ease;
     " onmouseover="this.style.borderColor='#d4af37'; this.style.boxShadow='0 6px 24px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 240, 180, 0.3)';" onmouseout="this.style.borderColor='rgba(212, 175, 55, 0.38)'; this.style.boxShadow='0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 240, 180, 0.15)';">
-
+        
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(212, 175, 55, 0.2); color: #f1d675; font-size: 11px;">✦</span>
             <div style="text-align: left;">
@@ -335,6 +349,16 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="validationModal" role="dialog" aria-modal="true" aria-labelledby="validationModalTitle">
+        <div class="modal-box validation-modal-box">
+            <div class="validation-icon" aria-hidden="true">!</div>
+            <div class="modal-title" id="validationModalTitle">Almost There</div>
+            <p class="validation-copy">Please complete the following details before submitting your free reservation.</p>
+            <ul class="missing-fields" id="missingFields"></ul>
+            <button class="validation-action" type="button" onclick="closeValidationModal()">Complete My Details</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="whatsappModal" role="dialog" aria-modal="true" aria-labelledby="whatsappModalTitle">
         <div class="modal-box consult-modal-box">
             <div class="consult-icon" aria-hidden="true">
@@ -410,11 +434,41 @@
 
         function validateReservation() {
             const data = reservationData();
-            if (!data.name || !data.visitDate || !data.partySize || !data.budget || !data.hotel || !field('contactInput')) {
-                alert('Please complete all required fields before submitting your free reservation.');
+            const requiredFields = [
+                { missing: !data.visitDate, label: 'Reservation date', target: 'dateInput' },
+                { missing: !data.partySize, label: 'Number of guests', target: 'p1' },
+                { missing: !data.budget, label: 'VIP course', target: 'b1' },
+                { missing: !data.name, label: 'Full name', target: 'nameInput' },
+                { missing: !data.hotel, label: 'Hotel name', target: 'hotelInput' },
+                { missing: !field('contactInput'), label: 'WhatsApp / contact number', target: 'contactInput' }
+            ];
+            const missing = requiredFields.filter(item => item.missing);
+            if (missing.length) {
+                showValidationModal(missing);
                 return false;
             }
             return true;
+        }
+
+        let validationFocusTarget = null;
+
+        function showValidationModal(missing) {
+            validationFocusTarget = document.getElementById(missing[0].target);
+            document.getElementById('missingFields').replaceChildren(...missing.map(item => {
+                const row = document.createElement('li');
+                row.textContent = item.label;
+                return row;
+            }));
+            document.getElementById('validationModal').classList.add('active');
+            document.querySelector('#validationModal .validation-action').focus();
+        }
+
+        function closeValidationModal() {
+            document.getElementById('validationModal').classList.remove('active');
+            if (validationFocusTarget) {
+                validationFocusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => validationFocusTarget.focus(), 280);
+            }
         }
 
         async function apiJson(path, options = {}) {

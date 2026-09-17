@@ -54,9 +54,8 @@
             background: #101014;
         }
         .hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-        .hero-image .cover-slide { position: absolute; inset: 0; opacity: 0; animation: heroCrossfade 12s ease-in-out infinite; }
-        .hero-image .cover-slide:nth-child(2) { animation-delay: 6s; }
-        @keyframes heroCrossfade { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+        .hero-image .cover-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .65s ease; }
+        .hero-image .cover-slide.active { opacity: 1; }
         .hero-image::after {
             content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
             background: linear-gradient(90deg, rgba(5, 7, 10, .95) 0%, rgba(5, 7, 10, .82) 32%, rgba(5, 7, 10, .32) 68%, rgba(5, 7, 10, .16) 100%);
@@ -94,6 +93,11 @@
         .hero-action.primary { color: #17130a; background: linear-gradient(135deg, #f0d77f, #b98729); border-color: #e6c563; }
         .hero-action:hover { transform: translateY(-2px); background: rgba(212, 175, 55, .16); }
         .hero-action.primary:hover { color: #090704; background: linear-gradient(135deg, #ffe69a, #c99731); }
+        .hero-carousel-controls { position: absolute; z-index: 3; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 11px; }
+        .hero-arrow { width: 34px; height: 34px; border: 1px solid rgba(232, 205, 126, .58); border-radius: 50%; background: rgba(8, 9, 9, .55); color: #ead493; font-size: 24px; line-height: 1; cursor: pointer; backdrop-filter: blur(7px); }
+        .hero-dots { display: flex; align-items: center; gap: 7px; }
+        .hero-dot { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .48); cursor: pointer; transition: width .25s ease, border-radius .25s ease, background .25s ease; }
+        .hero-dot.active { width: 22px; border-radius: 8px; background: #d8bc70; }
         .content { padding: 24px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         h2 { margin: 0 0 4px 0; font-size: 22px; letter-spacing: 0.5px; color: #f3f3f3; }
         .subtitle { font-size: 12px; color: #d4af37; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
@@ -273,7 +277,7 @@
         .content button.whatsapp-btn:hover { background: #2a9a57; }
         @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) { .content { padding: 42px 32px; } }
         @media (max-width: 380px) { .content { padding: 28px 18px; } .visit-grid { grid-template-columns: 1fr; gap: 0; } }
-        @media (prefers-reduced-motion: reduce) { .booking-header h1, .content button.submit-btn, .hero-image .cover-slide { animation: none; } .hero-image .cover-slide:first-child { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .booking-header h1, .content button.submit-btn, .hero-image .cover-slide { animation: none; transition: none; } }
     </style>
     <script src="api-config.js"></script>
     <script src="analytics.js" defer></script>
@@ -283,8 +287,9 @@
 
     <div class="wrapper">
         <div class="hero-image">
-            <img class="cover-slide" src="main pic1.png" alt="Female partner in her twenties for a private Busan nightlife experience" decoding="async" fetchpriority="high">
+            <img class="cover-slide active" src="main pic1.png" alt="Female partner in her twenties for a private Busan nightlife experience" decoding="async" fetchpriority="high">
             <img class="cover-slide" src="main pic2.png" alt="Female partners in their twenties at a private Busan lounge" decoding="async">
+            <img class="cover-slide" src="main pic3.png" alt="Female partners in their twenties at a premium private lounge in Busan" decoding="async">
             <div class="hero-copy">
                 <p class="hero-kicker">Busan Private Karaoke · Female Partner Service</p>
                 <h2><span class="gold-line">Female Partners in Their 20s.</span>Your Private Night in Busan.</h2>
@@ -293,6 +298,11 @@
                     <a class="hero-action primary" href="#formContent">Reserve Your Night</a>
                     <a class="hero-action" href="guide.html">View Experiences</a>
                 </div>
+            </div>
+            <div class="hero-carousel-controls" aria-label="Cover image controls">
+                <button class="hero-arrow hero-prev" type="button" aria-label="Previous image">‹</button>
+                <div class="hero-dots" aria-label="Choose cover image"></div>
+                <button class="hero-arrow hero-next" type="button" aria-label="Next image">›</button>
             </div>
         </div>
 
@@ -580,5 +590,8 @@
         }
 
     </script>
+  <script>
+    (()=>{const hero=document.querySelector('.hero-image'),slides=[...hero.querySelectorAll('.cover-slide')],dotsBox=hero.querySelector('.hero-dots');if(slides.length<2)return;let current=0,timer,touchStartX=0;const dots=slides.map((_,i)=>{const dot=document.createElement('button');dot.type='button';dot.className='hero-dot'+(i===0?' active':'');dot.setAttribute('aria-label',`Show cover image ${i+1}`);dot.onclick=()=>show(i,true);dotsBox.appendChild(dot);return dot});function show(next,manual=false){current=(next+slides.length)%slides.length;slides.forEach((slide,i)=>slide.classList.toggle('active',i===current));dots.forEach((dot,i)=>dot.classList.toggle('active',i===current));if(manual)restart()}function restart(){clearInterval(timer);timer=setInterval(()=>show(current+1),3500)}hero.querySelector('.hero-prev').onclick=()=>show(current-1,true);hero.querySelector('.hero-next').onclick=()=>show(current+1,true);hero.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].clientX},{passive:true});hero.addEventListener('touchend',e=>{const distance=e.changedTouches[0].clientX-touchStartX;if(Math.abs(distance)>45)show(current+(distance<0?1:-1),true)},{passive:true});restart()})();
+  </script>
 </body>
 </html>

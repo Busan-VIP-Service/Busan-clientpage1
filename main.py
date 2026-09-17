@@ -253,6 +253,7 @@ class AdminInvoiceRequest(BaseModel):
     guestCount: int = Field(default=1, ge=1, le=30)
     interpreterUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
     additionalUsd: Decimal = Field(default=Decimal('0'), ge=0, le=100000)
+    discountPercent: Literal[0, 5, 10, 15, 20] = 0
     note: str = Field(default='', max_length=500)
 
 def paypal_access_token() -> str:
@@ -523,7 +524,9 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
     if data.customerEmail and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', data.customerEmail):
         raise HTTPException(422, 'Enter a valid customer email or leave it blank.')
     course_total = data.courseUsd * data.guestCount
-    total = course_total + data.interpreterUsd + data.additionalUsd
+    subtotal = course_total + data.interpreterUsd + data.additionalUsd
+    discount_amount = subtotal * Decimal(data.discountPercent) / Decimal('100')
+    total = subtotal - discount_amount
     if total <= 0:
         raise HTTPException(422, 'The final amount must be greater than zero.')
     money = lambda value: f'{value.quantize(Decimal("0.01"))}'
@@ -531,6 +534,8 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
         f'Course: US${money(data.courseUsd)} × {data.guestCount} guest(s) · '
         f'Interpreter service: US${money(data.interpreterUsd)} · '
         f'Other service adjustment: US${money(data.additionalUsd)} · '
+        f'Subtotal: US${money(subtotal)} · Discount: {data.discountPercent}% '
+        f'(−US${money(discount_amount)}) · '
         f'Course and interpreter fees are itemized separately.'
     )
     if data.note.strip():
@@ -598,10 +603,13 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
             ))
         send_telegram_alert(
             f'[결제 요청 생성] {order_id}\n고객: {data.customerName}\n'
-            f'코스: {data.courseName}\n최종 청구: US${money(total)}\n{payer_url}'
+            f'코스: {data.courseName}\n할인: {data.discountPercent}% '
+            f'(US${money(discount_amount)})\n최종 청구: US${money(total)}\n{payer_url}'
         )
         return {
-            'invoice_id': order_id, 'total': money(total), 'currency': 'USD',
+            'invoice_id': order_id, 'subtotal': money(subtotal),
+            'discount_percent': data.discountPercent, 'discount_amount': money(discount_amount),
+            'total': money(total), 'currency': 'USD',
             'payer_url': payer_url, 'qr_image': '', 'request_type': 'order',
         }
     
@@ -645,6 +653,12 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
         'primary_recipients': [recipient],
         'items': items,
     }
+    if data.discountPercent:
+        payload['amount'] = {
+            'breakdown': {
+                'discount': {'invoice_discount': {'percent': str(data.discountPercent)}}
+            }
+        }
     try:
         with httpx.Client(timeout=25) as client:
             created = client.post(
@@ -713,10 +727,13 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
         ))
     send_telegram_alert(
         f'[인보이스 발행] {invoice_id}\n고객: {data.customerName}\n'
-        f'코스: {data.courseName}\n최종 청구: US${money(total)}\n{payer_url}'
+        f'코스: {data.courseName}\n할인: {data.discountPercent}% '
+        f'(US${money(discount_amount)})\n최종 청구: US${money(total)}\n{payer_url}'
     )
     return {
-        'invoice_id': invoice_id, 'total': money(total), 'currency': 'USD',
+        'invoice_id': invoice_id, 'subtotal': money(subtotal),
+        'discount_percent': data.discountPercent, 'discount_amount': money(discount_amount),
+        'total': money(total), 'currency': 'USD',
         'payer_url': payer_url, 'qr_image': qr_image, 'request_type': 'invoice',
     }
 

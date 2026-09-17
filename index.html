@@ -238,14 +238,16 @@
             .content { width: 45%; height: 100vh; padding: 40px; }
         }
         @media (max-width: 767px) {
-            .hero-image { height: clamp(390px, 58svh, 520px); }
+            .hero-image { height: clamp(380px, 56svh, 480px); max-height: none; }
             .hero-image img { object-position: right center; }
-            .hero-image::after { background: linear-gradient(90deg, rgba(5, 7, 10, .70) 0%, rgba(5, 7, 10, .45) 48%, rgba(5, 7, 10, .05) 100%); }
-            .hero-copy { width: 76%; padding: 28px 22px; justify-content: flex-end; }
-            .hero-copy h2 { font-size: clamp(30px, 9vw, 42px); }
+            .hero-image::after { background: linear-gradient(90deg, rgba(5, 7, 10, .70) 0%, rgba(5, 7, 10, .45) 50%, rgba(5, 7, 10, .05) 100%); }
+            .hero-copy { width: 88%; padding: 28px 22px 65px; justify-content: flex-end; }
+            .hero-copy h2 { font-size: clamp(30px, 9vw, 40px); }
             .hero-description { margin-top: 12px; font-size: 12px; line-height: 1.5; }
             .hero-actions { margin-top: 18px; gap: 8px; }
-            .hero-action { min-width: 0; padding: 11px 13px; font-size: 9px; }
+            .hero-action { min-width: 0; padding: 11px 14px; font-size: 10px; }
+            .hero-carousel-controls {right: 18px;bottom: 18px;left: auto;transform: none;gap: 6px; }
+            .hero-arrow { width: 28px; height: 28px; font-size: 16px; }
         }
 
         /* Reservation console */

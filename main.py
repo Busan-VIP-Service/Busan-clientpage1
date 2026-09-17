@@ -800,7 +800,7 @@ def home():
 
 @app.get('/{asset}')
 def static_asset(asset: str):
-    allowed = {'analytics.js', 'index.html', 'admin.html', 'guide.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png', 'course-concept-600-v2.png', 'course-concept-800-v2.png', 'course-concept-1200.png'}
+    allowed = {'analytics.js', 'index.html', 'admin.html', 'guide.html', 'course-results.js', 'courses.css', 'api-config.js', 'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png', 'main pic1.png', 'main pic2.png', 'course-concept-600-v2.png', 'course-concept-800-v2.png', 'course-concept-1200.png'}
     if asset not in allowed and not re.fullmatch(r'(?:main|mobile_main|image1 \(\d+\))\.png', asset):
         raise HTTPException(404)
     path = ROOT / asset

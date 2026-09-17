@@ -55,10 +55,10 @@
         }
         .hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
         .hero-image .cover-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .65s ease; }
-        .hero-image .cover-slide.active { opacity: 0.7; }
+        .hero-image .cover-slide.active { opacity: 1; }
         .hero-image::after {
             content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            background: linear-gradient(90deg, rgba(5, 7, 10, .95) 0%, rgba(5, 7, 10, .82) 32%, rgba(5, 7, 10, .32) 68%, rgba(5, 7, 10, .16) 100%);
+            background: linear-gradient(90deg, rgba(5, 7, 10, .80) 0%, rgba(5, 7, 10, .65) 32%, rgba(5, 7, 10, .25) 68%, rgba(5, 7, 10, .16) 100%);
         }
         .hero-copy {
             position: absolute; inset: 0 auto 0 0; z-index: 2; width: min(68%, 620px);

@@ -803,7 +803,8 @@ def static_asset(asset: str):
     allowed = {'analytics.js', 'index.html', 'admin.html', 'guide.html', 'course-results.js', 'courses.css', 'api-config.js', 
                'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png', 
                'main pic1.png', 'main pic2.png', 'main pic3.png', 'main pic1.webp', 'main pic2.webp', 'main pic3.webp', 'main pic4.webp', 'main_pic5v2.webp', 
-               'main pic7.webp', 'main_pic8.webp', 'main pic9.webp', 'main_pic10.webp', 'main pic11.webp', 'main_pic12.webp', 'main pic13.webp', 'main pic14.webp', 'main pic15.webp', 'main pic15.webp', 'course-concept-600-v2.png', 
+               'main pic7.webp', 'main_pic8.webp', 'main pic9.webp', 'main_pic10.webp', 'main pic11.webp', 'main_pic12.webp', 'main pic13.webp', 'main pic14.webp', 'main pic15.webp', 'main pic15.webp',
+               'main pic16.webp', 'main pic17.webp', 'course-concept-600-v2.png', 
                'course-concept-800-v2.png', 'course-concept-1200.png'}
     if asset not in allowed and not re.fullmatch(r'(?:main|mobile_main|image1 \(\d+\))\.png', asset):
         raise HTTPException(404)

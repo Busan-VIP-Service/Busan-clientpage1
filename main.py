@@ -18,7 +18,7 @@ import uuid
 import httpx
 import psycopg2
 import psycopg2.extras
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
@@ -126,6 +126,8 @@ def connect_db():
                 
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_paypal_order ON reservations(paypal_order_id)')
         cursor.execute('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ')
+        cursor.execute('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS verification_token_hash TEXT')
+        cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_verification_token ON reservations(verification_token_hash)')
         cursor.execute('''CREATE TABLE IF NOT EXISTS phone_verifications (
             token_hash TEXT PRIMARY KEY, phone TEXT NOT NULL, ip_hash TEXT NOT NULL,
             provider_sid TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -558,23 +560,40 @@ def capture_paypal_order(order_id: str):
 
 
 @app.post('/api/reservation')
-def create_free_reservation(data: ReservationRequest):
+def create_free_reservation(data: ReservationRequest, background_tasks: BackgroundTasks):
     if not data.name.strip() or not data.hotel.strip() or not data.phone.strip():
         raise HTTPException(422, 'Name, hotel, and phone number are required.')
+    token_hash = phone_hash(data.verificationToken)
     with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('SELECT id FROM reservations WHERE verification_token_hash=%s AND phone=%s',
+                       (token_hash, data.phone.strip()))
+        existing = cursor.fetchone()
+        if existing:
+            return {
+                'status': 'success', 'reservation_id': existing['id'], 'payment_status': 'free_reservation',
+                'whatsapp_url': reservation_whatsapp(data, existing['id'], paid=False),
+            }
         cursor.execute('''UPDATE phone_verifications SET consumed_at=NOW()
             WHERE token_hash=%s AND phone=%s AND verified_at IS NOT NULL
             AND expires_at>NOW() AND consumed_at IS NULL RETURNING verified_at''',
-            (phone_hash(data.verificationToken), data.phone.strip()))
+            (token_hash, data.phone.strip()))
         verified = cursor.fetchone()
         if not verified:
-            raise HTTPException(403, 'Verify this phone number before booking.')
+            cursor.execute('SELECT id FROM reservations WHERE verification_token_hash=%s AND phone=%s',
+                           (token_hash, data.phone.strip()))
+            existing = cursor.fetchone()
+            if existing:
+                return {
+                    'status': 'success', 'reservation_id': existing['id'], 'payment_status': 'free_reservation',
+                    'whatsapp_url': reservation_whatsapp(data, existing['id'], paid=False),
+                }
+            raise HTTPException(403, 'Phone verification expired. Request a new code before booking.')
         cursor.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
-             payment_status, phone_verified_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
+             payment_status, phone_verified_at, verification_token_hash)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
-            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'free_reservation', verified['verified_at'],
+            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'free_reservation', verified['verified_at'], token_hash,
         ))
         reservation_id = cursor.fetchone()['id']
         db.commit()
@@ -590,8 +609,8 @@ def create_free_reservation(data: ReservationRequest):
         f'상태: 무료 예약 접수 · 일정 확인 필요\n'
         f'후속 조치: WhatsApp으로 가능 여부 및 상세 내용 확인'
     )
-    send_telegram_alert(text)
-    send_email_alert(text, reservation_id, '[무료 예약] VIP 예약 요청')
+    background_tasks.add_task(send_telegram_alert, text)
+    background_tasks.add_task(send_email_alert, text, reservation_id, '[무료 예약] VIP 예약 요청')
     return {
         'status': 'success', 'reservation_id': reservation_id, 'payment_status': 'free_reservation',
         'whatsapp_url': reservation_whatsapp(data, reservation_id, paid=False),

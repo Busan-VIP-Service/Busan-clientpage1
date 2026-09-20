@@ -28,11 +28,14 @@ DATABASE_URL = os.getenv('DATABASE_URL', '')
 
 app = FastAPI(title='Busan Private Concierge · Direct Booking')
 logger = logging.getLogger(__name__)
+ALLOWED_ORIGINS = {
+    'https://midnightsunrisebusan.com',
+    'https://www.midnightsunrisebusan.com',
+    'https://busan-vip-service.github.io',
+} | {origin.strip().rstrip('/') for origin in os.getenv('BUSAN_ALLOWED_ORIGINS', '').split(',') if origin.strip()}
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip().rstrip('/') for origin in os.getenv(
-        'BUSAN_ALLOWED_ORIGINS', 'https://busan-vip-service.github.io'
-    ).split(',') if origin.strip()],
+    allow_origins=sorted(ALLOWED_ORIGINS),
     allow_methods=['POST', 'GET'],
     allow_headers=['Content-Type', 'x-busan-request'],
 )
@@ -272,8 +275,7 @@ def require_phone_request(request: Request):
     if request.headers.get('x-busan-request') != '1':
         raise HTTPException(403, 'Invalid request.')
     origin = request.headers.get('origin')
-    allowed = {item.strip().rstrip('/') for item in os.getenv('BUSAN_ALLOWED_ORIGINS', 'https://busan-vip-service.github.io').split(',')}
-    if origin and origin.rstrip('/') not in allowed:
+    if origin and origin.rstrip('/') not in ALLOWED_ORIGINS:
         raise HTTPException(403, 'Invalid origin.')
 
 def otp_hash(token: str, code: str) -> str:

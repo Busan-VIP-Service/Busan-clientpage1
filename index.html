@@ -314,11 +314,23 @@
         .course-preview p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
         .course-preview small { display: block; margin-top: 9px; color: #857f70; font-size: 10px; line-height: 1.45; }
         @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } }
-        .content .contact-group { margin: 0; }
-        .content .contact-group select { flex: 0 0 165px; min-width: 0; font-size: 15px; }
-        .content .contact-group input { flex: 1; min-width: 0; }
-        .content .contact-group select { flex: 0 0 100px; min-width: 0; }
-        .content .contact-group input { flex: 1; min-width: 0; }
+        .content .contact-group { margin: 0; gap: 9px; }
+        .content .contact-group select { flex: 0 0 180px; min-width: 0; font: inherit; font-size: 13px; }
+        .content .contact-group input { flex: 1; min-width: 0; font: inherit; font-size: 14px; }
+        .content .phone-search-wrap { height: 46px; display: flex; align-items: center; gap: 9px; padding: 0 13px; margin-bottom: 9px; background: #1e221f; border: 1px solid #3d443e; border-radius: 6px; color: #a9af9f; transition: border-color .2s ease; }
+        .content .phone-search-wrap:focus-within { border-color: #c1af82; }
+        .content .phone-search-wrap svg { flex: none; width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+        .content #countrySearch { width: 100%; height: 100%; min-width: 0; padding: 0; margin: 0; border: 0; outline: 0; background: transparent; color: #f0f0e9; font: inherit; font-size: 13px; }
+        .content #countrySearch::placeholder, .content #phoneCode::placeholder { color: #929a91; opacity: 1; }
+        .content .phone-action { height: 46px; border: 1px solid #b5a681; border-radius: 6px; background: #292b24; color: #ead9ad; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
+        .content .phone-action:hover { background: #353629; border-color: #dbc896; }
+        .content #sendPhoneCode { width: 100%; margin-top: 10px; }
+        .content #phoneCodeStep:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 9px; margin-top: 10px; }
+        .content #phoneCode { width: 100%; min-width: 0; font: inherit; font-size: 14px; letter-spacing: .12em; }
+        .content #checkPhoneCode { width: 100%; }
+        .content #phoneVerificationStatus { margin: 10px 0 0; color: #d7c797; font-size: 12px; line-height: 1.5; }
+        .content #phoneVerificationStatus:empty { display: none; }
+        @media (max-width: 420px) { .content .contact-group { flex-direction: column; } .content .contact-group select, .content .contact-group input { flex: auto; width: 100%; } }
         .business-details { margin-top: 18px; }
         .business-details summary { cursor: pointer; color: #a4ada4; font-size: 12px; padding: 4px 0; }
         .business-details summary span { margin-left: 8px; color: #858f85; font-size: 11px; }
@@ -463,14 +475,14 @@
                 <label class="section-label" for="hotelInput">Hotel Name</label>
                 <input type="text" id="hotelInput" placeholder="e.g. Signiel Busan" aria-required="true">
                 <label class="section-label" for="contactInput">Mobile number for SMS verification</label>
-                <input id="countrySearch" type="search" placeholder="Search country or calling code" aria-label="Search countries" style="margin-bottom:8px">
+                <div class="phone-search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m15.5 15.5 5 5"></path></svg><input id="countrySearch" type="search" placeholder="Search country or calling code" aria-label="Search countries"></div>
                 <div class="contact-group">
                     <select id="countryCode" aria-label="Country calling code">
                     </select>
                     <input type="text" id="contactInput" autocomplete="tel-national" inputmode="tel" placeholder="Phone number" aria-required="true">
                 </div>
-                <button id="sendPhoneCode" type="button">Send SMS code</button>
-                <div id="phoneCodeStep" hidden><input id="phoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="SMS code" aria-label="SMS verification code"><button id="checkPhoneCode" type="button">Verify number</button></div>
+                <button id="sendPhoneCode" class="phone-action" type="button">Send verification code</button>
+                <div id="phoneCodeStep" hidden><input id="phoneCode" type="text" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" aria-label="SMS verification code"><button id="checkPhoneCode" class="phone-action" type="button">Verify number</button></div>
                 <p id="phoneVerificationStatus" role="status" aria-live="polite"></p>
                 <details class="business-details">
                     <summary>Business Information <span>Optional</span></summary>

@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A Letter from a Local Interpreter | Midnight Sunrise Busan</title>
-    <meta name="description" content="A candid, personal guide by a local Busan interpreter explaining why Korean nightlife is so closed-off to foreigners, and how we provide a transparent, clean booking experience.">
+    <title>VIP Nightlife Experience & Venue Guide | Midnight Sunrise Busan</title>
+    <meta name="description" content="A visual, step-by-step breakdown of your private VIP nightlife experience in Busan. All-inclusive base pricing, zero forced fees, and seamless venue coordination.">
     <link rel="canonical" href="https://midnightsunrisebusan.com/guide.html">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://midnightsunrisebusan.com/guide.html">
-    <meta property="og:title" content="A Candid Guide to Busan Nightlife from a Local Interpreter">
-    <meta property="og:description" content="Why Korean nightlife is closed even to locals, and why I built a clean, transparent concierge without surprise fees.">
-    <meta property="og:image" content="https://midnightsunrisebusan.com/main.png">
+    <meta property="og:title" content="Busan Private VIP Nightlife: Visual Timeline & Experience Guide">
+    <meta property="og:description" content="Visual walkthrough, private suite setup, and 100% transparent pricing policy.">
+    <meta property="og:image" content="https://midnightsunrisebusan.com/main pic2.webp">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #0d0e0d;
+            background-color: #0b0c0b;
             color: #e3e8e4;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.8;
+            line-height: 1.7;
             padding: 0;
         }
         header.guide-nav {
-            padding: 18px 24px;
-            background: #151816;
+            padding: 16px 24px;
+            background: rgba(18, 20, 19, 0.95);
             border-bottom: 1px solid #282e29;
             display: flex;
             justify-content: space-between;
@@ -30,27 +30,28 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(8px);
         }
         .brand-logo {
             color: #d8bc70;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             text-decoration: none;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
         .btn-book {
             background: linear-gradient(135deg, #d6ad4e, #9c7122);
             color: #111;
-            padding: 8px 16px;
+            padding: 7px 15px;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 700;
             text-decoration: none;
         }
         .container {
-            max-width: 740px;
+            max-width: 720px;
             margin: 0 auto;
-            padding: 48px 24px 80px;
+            padding: 40px 20px 80px;
         }
         .eyebrow {
             color: #b5a681;
@@ -58,117 +59,223 @@
             font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         h1 {
             font-family: Didot, 'Bodoni MT', Georgia, serif;
-            font-size: clamp(26px, 3.8vw, 36px);
-            line-height: 1.3;
+            font-size: clamp(25px, 4vw, 35px);
+            line-height: 1.25;
             color: #f1ebd8;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             font-weight: 500;
         }
         .author-tag {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid #262c27;
-            margin-bottom: 35px;
-            color: #9ea69e;
+            gap: 10px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222823;
+            margin-bottom: 28px;
+            color: #959e95;
             font-size: 13px;
         }
-        .author-tag strong {
-            color: #d8bc70;
-        }
+        .author-tag strong { color: #d8bc70; }
+
         h2 {
-            font-size: 20px;
+            font-size: 19px;
             color: #e5d5b0;
-            margin: 42px 0 16px;
+            margin: 38px 0 16px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         p {
-            font-size: 15px;
-            color: #c7cec7;
-            margin-bottom: 18px;
+            font-size: 14.5px;
+            color: #bcc4bc;
+            margin-bottom: 16px;
         }
-        .highlight-quote {
-            background: #171b18;
-            border-left: 3px solid #d4af37;
+
+        /* 4단계 타임라인 카드 스타일 */
+        .timeline-box {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            margin: 20px 0 34px;
+        }
+        .timeline-step {
+            background: #141715;
+            border: 1px solid #29302a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        /* 각 스텝 전용 이미지 스타일 */
+        .step-visual-wrap {
+        width: 100%;
+        max-height: 480px; /* 너무 과하게 커지는 것만 방지 */
+        position: relative;
+        background: #0d0f0e;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        }
+        .step-visual-wrap img {
+        width: 100%;
+        height: auto;
+        max-height: 480px;
+        object-fit: contain; /* 잘림 없이 원본 전체가 100% 다 보이게 맞춤 */
+        display: block;
+        }
+        .step-content {
             padding: 20px 22px;
-            margin: 28px 0;
-            border-radius: 0 8px 8px 0;
-            font-style: normal;
         }
-        .highlight-quote p {
-            color: #e6eae5;
-            font-size: 14.5px;
-            margin: 0;
-            line-height: 1.7;
-        }
-        ul {
-            padding-left: 20px;
-            margin-bottom: 22px;
-            color: #b0b8b0;
-            font-size: 14.5px;
-        }
-        li {
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 10px;
         }
-        strong {
-            color: #f2f5f1;
+        .step-num {
+            background: linear-gradient(135deg, #d6ad4e, #9c7122);
+            color: #111;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
         }
-        .promise-box {
-            background: linear-gradient(145deg, #1d211e, #141715);
-            border: 1px solid #3d463e;
-            border-radius: 10px;
-            padding: 28px 24px;
-            margin: 36px 0;
-        }
-        .promise-box h3 {
+        .timeline-title {
             color: #f1ebd8;
-            font-size: 17px;
-            margin-bottom: 14px;
+            font-size: 16px;
             font-weight: 600;
         }
+        .step-icon {
+            margin-left: auto;
+            color: #d4af37;
+            font-size: 18px;
+        }
+        .timeline-step p {
+            margin: 0;
+            font-size: 13.5px;
+            color: #9ea79e;
+            line-height: 1.65;
+        }
+
+        /* 투명 요금표 카드 */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 22px 0 32px;
+        }
+        @media (max-width: 600px) {
+            .pricing-grid { grid-template-columns: 1fr; }
+            .step-visual-wrap { height: 210px; }
+        }
+        .pricing-card {
+            background: #141715;
+            border: 1px solid #2b332c;
+            border-radius: 10px;
+            padding: 20px 18px;
+        }
+        .pricing-card.included {
+            border-color: rgba(212, 175, 55, 0.4);
+            background: linear-gradient(145deg, #171c18, #121513);
+        }
+        .pricing-card h3 {
+            font-size: 14.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pricing-card.included h3 { color: #f1d675; }
+        .pricing-card.optional h3 { color: #d0d7d0; }
+        .pricing-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+        }
+        .pricing-card li {
+            padding: 5px 0 5px 18px;
+            position: relative;
+            color: #aeb6ae;
+        }
+        .pricing-card.included li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #d4af37;
+            font-weight: 800;
+        }
+        .pricing-card.optional li::before {
+            content: "+";
+            position: absolute;
+            left: 0;
+            color: #8c968c;
+            font-weight: 800;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #1f2520;
+            padding: 14px 0;
+        }
+        .faq-item h4 {
+            color: #ded7c6;
+            font-size: 14.5px;
+            margin-bottom: 5px;
+        }
+        .faq-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #959e95;
+        }
+
+        /* CTA 버튼 카드 */
         .cta-card {
-            margin-top: 55px;
-            padding: 40px 24px;
-            background: radial-gradient(circle at 50% 0, rgba(212, 175, 55, 0.12), transparent 70%), #171b18;
+            margin-top: 50px;
+            padding: 36px 20px;
+            background: radial-gradient(circle at 50% 0, rgba(212, 175, 55, 0.12), transparent 70%), #141715;
             border: 1px solid #4a4534;
             border-radius: 12px;
             text-align: center;
         }
         .cta-card h3 {
             color: #f1ebd8;
-            font-size: 22px;
-            margin-bottom: 12px;
+            font-size: 21px;
+            margin-bottom: 10px;
             font-family: Didot, 'Bodoni MT', Georgia, serif;
             font-weight: 500;
         }
         .cta-card p {
-            color: #9da59d;
-            font-size: 13.5px;
-            max-width: 480px;
-            margin: 0 auto 24px;
+            color: #929a92;
+            font-size: 13px;
+            margin-bottom: 22px;
         }
         .cta-btn {
             display: inline-block;
-            background: linear-gradient(135deg, #e6c563 0%, #bd8f31 100%);
-            color: #111;
-            padding: 14px 30px;
-            font-weight: 700;
-            font-size: 14px;
+            border: 1px solid #e1c36f;
             border-radius: 6px;
+            background: linear-gradient(110deg, #936b20 0%, #d6ad4e 28%, #fff0a0 46%, #bd8828 62%, #efd27b 82%, #9c7122 100%);
+            color: #19150b;
+            padding: 14px 32px;
             text-decoration: none;
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2);
+            font-size: 14.5px;
+            font-weight: 800;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(197, 151, 42, 0.25);
+            transition: transform 0.2s ease;
         }
+        .cta-btn:hover { transform: translateY(-2px); }
         footer {
             text-align: center;
             padding: 30px;
-            color: #5d635d;
+            color: #555b55;
             font-size: 11px;
-            border-top: 1px solid #1c201d;
+            border-top: 1px solid #181d19;
         }
     </style>
 </head>
@@ -178,87 +285,142 @@
         <a href="index.html" class="brand-logo">MIDNIGHT SUNRISE BUSAN</a>
         <a href="index.html" class="btn-book">Back to Reservation</a>
     </header>
+
     <div class="container">
-        <div class="eyebrow">A Candid Reality Check</div>
-        <h1>Why Korean Nightlife Feels Impossible to Enter — And Why I Built This Service</h1>
-
+        <div class="eyebrow">Visual Experience & Venue Guide</div>
+        <h1>Step-by-Step Reality: What Actually Happens on Your VIP Night</h1>
+        
         <div class="author-tag">
-            <span>By a <strong>Bilingual Interpreter & Local Tour Coordinator</strong> in Busan</span>
+            <span>Verified Concierge Walkthrough for <strong>International Guests in Busan</strong></span>
         </div>
 
         <p>
-            Let’s speak plainly. Traditional Korean private nightlife is one of the most closed-off, opaque subcultures in the world.
-        </p>
-        <p>
-            It is so deeply secretive that <strong>even native Koreans find it intimidating and difficult to access</strong> without the right personal introductions or established social networks. There are no clear street signs, no published menus, and no walk-in welcomes.
+            Unlike open bars or public dance clubs, traditional Korean high-end evening culture takes place inside <strong>exclusive, soundproofed private lounge suites</strong> with dedicated 20s hostesses, unlimited drinks, and complete discretion[cite: 1, 2].
         </p>
 
-        <div class="highlight-quote">
-            <p>
-                If it is this impenetrable for locals who speak the language fluently, imagine what it is like for an international traveler visiting Busan for a few days. For a foreigner, finding and entering an authentic private lounge on your own is practically impossible.
-            </p>
+        <h2>The Complete Experience Timeline</h2>
+        <div class="timeline-box">
+
+            <!-- STEP 1: Door Guide Image -->
+            <div class="timeline-step">
+                <div class="step-visual-wrap">
+                    <img src="door guide image.webp" alt="Private door escort and welcoming at Midnight Sunrise Busan" loading="lazy">
+                </div>
+                <div class="step-content">
+                    <div class="timeline-header">
+                        <span class="step-num">STEP 1</span>
+                        <span class="timeline-title">Discreet Arrival & Door Escort</span>
+                        <span class="step-icon">📍</span>
+                    </div>
+                    <p>
+                        Your concierge sends the exact venue coordinates in central Busan (Seomyeon or Haeundae) via WhatsApp[cite: 1]. You are met right at the private entrance by dedicated hosts, bypassing language barriers and foreigner walk-in restrictions completely[cite: 3].
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 2: Guide Image 1 (Suite Room Setup) -->
+            <div class="timeline-step">
+                <div class="step-visual-wrap">
+                    <img src="guide image1.webp" alt="Luxurious private suite and VIP table setup" loading="lazy">
+                </div>
+                <div class="step-content">
+                    <div class="timeline-header">
+                        <span class="step-num">STEP 2</span>
+                        <span class="timeline-title">Private Suite & Table Setup</span>
+                        <span class="step-icon">🍸</span>
+                    </div>
+                    <p>
+                        You are ushered into your spacious VIP room suite equipped with plush seating, high-end acoustics, and chilled whiskies, beers, mixers, and platters[cite: 1, 2]. The suite is 100% private to your group.
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 3: Main Pic 2 (Lineup & Choice) -->
+            <div class="timeline-step">
+                <div class="step-visual-wrap">
+                    <img src="main pic2.webp" alt="Lineup of verified 20s female partners for personal choice" loading="lazy">
+                </div>
+                <div class="step-content">
+                    <div class="timeline-header">
+                        <span class="step-num">STEP 3</span>
+                        <span class="timeline-title">Hostess Lineup & Personal Choice</span>
+                        <span class="step-icon">✨</span>
+                    </div>
+                    <p>
+                        A stunning lineup of verified female partners in their 20s enters your suite according to your selected course tier[cite: 1, 2]. You take your time and choose your favorite companion to sit right beside you for the evening[cite: 2].
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 4: Exit Guide Image -->
+            <div class="timeline-step">
+                <div class="step-visual-wrap">
+                    <img src="exit guide.webp" alt="Seamless departure and safe taxi escort back to hotel" loading="lazy">
+                </div>
+                <div class="step-content">
+                    <div class="timeline-header">
+                        <span class="step-num">STEP 4</span>
+                        <span class="timeline-title">The Party & Safe Hotel Departure</span>
+                        <span class="step-icon">🚕</span>
+                    </div>
+                    <p>
+                        Enjoy drinks, karaoke, conversation, and private entertainment without interruptions[cite: 1]. When your session ends, you checkout cleanly at your pre-agreed rate with zero hidden extortion[cite: 2]. Staff assists you directly to your waiting taxi.
+                    </p>
+                </div>
+            </div>
+
         </div>
 
-        <h2>Turned Away Simply for Being a Foreigner</h2>
+        <h2>Pricing Breakdown: Fixed Base vs. Optional Add-ons</h2>
         <p>
-            The hardest reality for international visitors to accept is being stopped at the door with a crossed-arm gesture and a flat refusal: <em>"No foreigners."</em>
-        </p>
-        <p>
-            While this feels like direct personal discrimination, working on the ground has shown me the practical reasons venue managers behave this way:
-        </p>
-        <ul>
-            <li><strong>Fear of Complications:</strong> Frontline staff and managers rarely speak English. If something goes wrong, they cannot communicate.</li>
-            <li><strong>Cash-Only Systems:</strong> Many traditional Korean venues operate on strict cash-only policies or Korean bank transfers. International credit cards frequently fail or cause confusion, leading to heated arguments over bills at 3:00 AM.</li>
-            <li><strong>Avoiding Disputes:</strong> Venue managers would rather lose the revenue from a foreign guest than risk a late-night police dispute or misunderstanding they cannot resolve in English.</li>
-        </ul>
-        <p>
-            So they choose the easiest option: they simply close the door.
+            We strictly enforce transparent billing. Your base course is all-inclusive, and any additions are 100% voluntary[cite: 1, 2]:
         </p>
 
-        <h2>Why I Decided to Build Midnight Sunrise Busan</h2>
-        <p>
-            I have spent years working as a professional interpreter and private tour coordinator here in Busan. Personally, I have never been interested in nightlife myself.
-        </p>
-        <p>
-            However, through my work with foreign executives, business travelers, and visitors, I repeatedly saw guests who genuinely wanted to experience authentic Korean evening culture—only to end up turned away at the door, stranded in unfamiliar alleys, or targeted by predatory street touts.
-        </p>
-        <p>
-            I realized that there was literally <strong>zero safe, transparent bridge</strong> for foreigners to experience this side of Busan. That is why I built this service.
-        </p>
+        <!-- 2열 비교 요금 카드 -->
+        <div class="pricing-grid">
+            <div class="pricing-card included">
+                <h3>Included in Base Package</h3>
+                <ul>
+                    <li>Private VIP Suite rental[cite: 2]</li>
+                    <li>Assigned 20s female hostesses[cite: 1, 2]</li>
+                    <li>Standard unlimited drinks & mixers[cite: 1, 2]</li>
+                    <li>Zero mandatory service tips or surprises[cite: 1, 2]</li>
+                    <li>Safe door entry guarantee[cite: 3]</li>
+                </ul>
+            </div>
 
-        <div class="promise-box">
-            <h3>My Core Promise to You</h3>
-            <ul>
-                <li><strong>100% Upfront, Transparent Pricing:</strong> No ambiguity. You know exactly what your experience costs before you confirm.</li>
-                <li><strong>Never Pay Extra at the Venue:</strong> The worst part of nightlife is sudden, surprise charges when the bill arrives. With us, there is absolutely no extra billing or hidden fee demanded at the venue. Everything is settled cleanly.</li>
-                <li><strong>Guaranteed, Respectful Entry:</strong> Because we arrange everything with venue owners in advance, you walk in as an honored, expected guest—never an unwanted walk-in.</li>
-                <li><strong>Busan Only:</strong> I don’t manage venues in Seoul or anywhere else. Busan is my backyard. I only vouch for places where I personally know the owners and can take full responsibility for your experience.</li>
-            </ul>
-        </div>
-
-        <p>
-            My goal is simply to cut through the gatekeeping, remove the language barriers, and guide you through Busan’s evening scene with complete transparency, safety, and respect.
-        </p>
-
-        <!-- CTA Card: 공식 메인 페이지로 돌아가는 단일 버튼 -->
-        <div class="cta-card">
-            <h3>Ready to Experience Busan Nightlife?</h3>
-            <p style="color: #a4ada4; font-size: 12px; margin-bottom: 24px;">
-                Review our VIP courses, select your dates, and submit your reservation for free.
-            </p>
-
-            <a href="https://midnightsunrisebusan.com/"
-               style="display: inline-block; border: 1px solid #e1c36f; border-radius: 6px; background: linear-gradient(110deg, #936b20 0%, #d6ad4e 28%, #fff0a0 46%, #bd8828 62%, #efd27b 82%, #9c7122 100%); color: #19150b; padding: 15px 36px; text-decoration: none; font-size: 15px; font-weight: 800; text-align: center; box-shadow: 0 6px 22px rgba(197, 151, 42, 0.28); transition: transform 0.2s ease;">
-                Return to Reservation & View VIP Courses →
-            </a>
-
-            <!-- 신뢰 약관 요약 -->
-            <div style="margin-top: 25px; text-align: left; max-width: 380px; margin-left: auto; margin-right: auto; border-left: 2px solid #555c4c; padding-left: 12px;">
-                <p style="margin: 3px 0; color: #8c948c; font-size: 11px; line-height: 1.5;">Your concierge will confirm availability and final details after you submit.</p>
-                <p style="margin: 3px 0; color: #8c948c; font-size: 11px; line-height: 1.5;">Reservations are free to submit. No deposit or online payment is required.</p>
-                <p style="margin: 3px 0; color: #8c948c; font-size: 11px; line-height: 1.5;">Balance: cash (KRW) on the day.</p>
+            <div class="pricing-card optional">
+                <h3>Optional Add-ons (Your Choice)</h3>
+                <ul>
+                    <li>Time extension (standard hourly suite/hostess rate)</li>
+                    <li>Vintage single malts / prestige champagnes</li>
+                    <li>Professional English interpreter escort[cite: 1]</li>
+                    <li>*Never added to your bill without prior approval.</li>
+                </ul>
             </div>
         </div>
+
+        <h2>Quick Q&A</h2>
+        <div class="faq-item">
+            <h4>Is it legal and safe?</h4>
+            <p>Yes. We coordinate exclusively with licensed, compliant 1st-tier venues in major commercial districts. Complete privacy and safety are maintained[cite: 3].</p>
+        </div>
+        <div class="faq-item">
+            <h4>What is the dress code?</h4>
+            <p>Smart casual (shirts, neat denim, shoes). Avoid gym tracksuits or beach sandals.</p>
+        </div>
+        <div class="faq-item">
+            <h4>When and how do I pay?</h4>
+            <p>Submitting this form is 100% free with zero deposit[cite: 1]. The base balance is settled in KRW cash or pre-arranged methods upon arrival[cite: 3].</p>
+        </div>
+
+        <!-- CTA Card -->
+        <div class="cta-card">
+            <h3>Ready for an Exclusive Night?</h3>
+            <p>Select your date and course style. No credit card or deposit needed[cite: 1, 3].</p>
+            <a href="index.html" class="cta-btn">Return to Reservation & View Courses →</a>
+        </div>
+    </div>
 
     <footer>
         &copy; 2026 Midnight Sunrise Busan. All rights reserved.

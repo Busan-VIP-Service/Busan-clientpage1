@@ -122,6 +122,15 @@ def connect_db():
                 cursor.execute(f'ALTER TABLE reservations ADD COLUMN {name} {definition}')
                 
         cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_reservations_paypal_order ON reservations(paypal_order_id)')
+        cursor.execute('ALTER TABLE reservations ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS phone_verifications (
+            token_hash TEXT PRIMARY KEY, phone TEXT NOT NULL, ip_hash TEXT NOT NULL,
+            provider_sid TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            expires_at TIMESTAMPTZ NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+            verified_at TIMESTAMPTZ, consumed_at TIMESTAMPTZ)''')
+        cursor.execute('ALTER TABLE phone_verifications ADD COLUMN IF NOT EXISTS code_hash TEXT')
+        cursor.execute('CREATE INDEX IF NOT EXISTS phone_verifications_phone_time ON phone_verifications(phone, created_at)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS phone_verifications_ip_time ON phone_verifications(ip_hash, created_at)')
         
         cursor.execute('''CREATE TABLE IF NOT EXISTS pending_paypal_orders (
             order_id TEXT PRIMARY KEY, reservation_json TEXT NOT NULL,
@@ -236,11 +245,125 @@ class ReservationRequest(BaseModel):
     budget: Literal['600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
+    verificationToken: str = Field(min_length=40, max_length=100)
 
 
 class AdminLoginRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     password: str = Field(min_length=1, max_length=200)
+
+
+PHONE_RE = re.compile(r'^\+[1-9][0-9]{7,14}$')
+
+class PhoneStart(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    phone: str
+    countryCode: str = Field(pattern=r'^[1-9][0-9]{0,3}$')
+
+class PhoneCheck(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    token: str
+    code: str
+
+def phone_hash(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()
+
+def require_phone_request(request: Request):
+    if request.headers.get('x-busan-request') != '1':
+        raise HTTPException(403, 'Invalid request.')
+    origin = request.headers.get('origin')
+    allowed = {item.strip().rstrip('/') for item in os.getenv('BUSAN_ALLOWED_ORIGINS', 'https://busan-vip-service.github.io').split(',')}
+    if origin and origin.rstrip('/') not in allowed:
+        raise HTTPException(403, 'Invalid origin.')
+
+def otp_hash(token: str, code: str) -> str:
+    pepper = os.getenv('SOLAPI_OTP_SECRET', '')
+    if len(pepper) < 32:
+        raise HTTPException(503, 'SMS verification is not configured yet.')
+    return hmac.new(pepper.encode(), f'{token}:{code}'.encode(), hashlib.sha256).hexdigest()
+
+
+def send_otp_sms(phone: str, country_code: str, code: str):
+    key = os.getenv('SOLAPI_API_KEY', '')
+    secret = os.getenv('SOLAPI_API_SECRET', '')
+    sender = os.getenv('SOLAPI_SENDER', '')
+    if not all((key, secret, sender)):
+        raise HTTPException(503, 'SMS verification is not configured yet.')
+    prefix = '+' + country_code
+    if not phone.startswith(prefix) or len(phone) <= len(prefix) + 3:
+        raise HTTPException(422, 'Phone number and country code do not match.')
+    recipient = phone[len(prefix):]
+    if country_code == '82':
+        recipient = '0' + recipient
+    try:
+        from solapi import SolapiMessageService
+        from solapi.model import RequestMessage
+        service = SolapiMessageService(api_key=key, api_secret=secret)
+        response = service.send(RequestMessage(
+            from_=sender, to=recipient, country=country_code,
+            text=f'Midnight Sunrise Busan Verification Code: {code}'
+        ))
+        if response.group_info.count.registered_success != 1:
+            raise RuntimeError('SMS was not accepted for sending')
+    except Exception as exc:
+        logger.warning('SMS provider failed (%s).', type(exc).__name__)
+        raise HTTPException(503, 'SMS verification is temporarily unavailable.') from exc
+
+@app.post('/api/phone/start')
+def start_phone_verification(data: PhoneStart, request: Request):
+    require_phone_request(request)
+    phone = data.phone.strip()
+    if not PHONE_RE.fullmatch(phone):
+        raise HTTPException(422, 'Enter a valid international phone number.')
+    if not phone.startswith('+' + data.countryCode) or len(phone) <= len(data.countryCode) + 4:
+        raise HTTPException(422, 'Phone number and country code do not match.')
+    if not all(os.getenv(name) for name in ('SOLAPI_API_KEY', 'SOLAPI_API_SECRET', 'SOLAPI_SENDER')):
+        raise HTTPException(503, 'SMS verification is not configured yet.')
+    code = f'{secrets.randbelow(1000000):06d}'
+    code_digest = otp_hash(token := secrets.token_urlsafe(32), code)
+    ip_hash = phone_hash(request.client.host if request.client else 'unknown')
+    with closing(connect_db()) as db, db.cursor() as cursor:
+        cursor.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', (phone,))
+        cursor.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', (ip_hash,))
+        cursor.execute("DELETE FROM phone_verifications WHERE created_at < NOW() - INTERVAL '2 days'")
+        cursor.execute("SELECT COUNT(*) AS n FROM phone_verifications WHERE phone=%s AND created_at > NOW()-INTERVAL '1 hour'", (phone,))
+        phone_hour = cursor.fetchone()['n']
+        cursor.execute("SELECT COUNT(*) AS n FROM phone_verifications WHERE ip_hash=%s AND created_at > NOW()-INTERVAL '1 hour'", (ip_hash,))
+        ip_hour = cursor.fetchone()['n']
+        cursor.execute("SELECT created_at FROM phone_verifications WHERE phone=%s ORDER BY created_at DESC LIMIT 1", (phone,))
+        last = cursor.fetchone()
+        if phone_hour >= 5 or ip_hour >= 15 or (last and (datetime.now(timezone.utc)-last['created_at']).total_seconds() < 60):
+            raise HTTPException(429, 'Please wait before requesting another code.', headers={'Retry-After': '60'})
+        # Record the attempt before contacting the provider so failures cannot bypass the budget.
+        cursor.execute("INSERT INTO phone_verifications(token_hash,phone,ip_hash,code_hash,expires_at) VALUES (%s,%s,%s,%s,NOW()+INTERVAL '10 minutes')", (phone_hash(token), phone, ip_hash, code_digest))
+        db.commit()
+    send_otp_sms(phone, data.countryCode, code)
+    return {'token': token, 'expires_in': 600, 'retry_after': 60}
+
+@app.post('/api/phone/check')
+def check_phone_verification(data: PhoneCheck, request: Request):
+    require_phone_request(request)
+    if not re.fullmatch(r'[A-Za-z0-9_-]{40,100}', data.token) or not re.fullmatch(r'[0-9]{6}', data.code):
+        raise HTTPException(422, 'Invalid verification code.')
+    with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('SELECT * FROM phone_verifications WHERE token_hash=%s FOR UPDATE', (phone_hash(data.token),))
+        row = cursor.fetchone()
+        if not row or row['expires_at'] <= datetime.now(timezone.utc) or row['consumed_at']:
+            raise HTTPException(410, 'Verification expired. Request a new code.')
+        if row['attempts'] >= 5:
+            raise HTTPException(429, 'Too many code attempts.')
+        if not row['code_hash']:
+            raise HTTPException(503, 'SMS verification is temporarily unavailable.')
+        cursor.execute('UPDATE phone_verifications SET attempts=attempts+1 WHERE token_hash=%s', (phone_hash(data.token),))
+        if not hmac.compare_digest(row['code_hash'], otp_hash(data.token, data.code)):
+            db.commit()
+            raise HTTPException(422, 'The code is incorrect or expired.')
+        cursor.execute('UPDATE phone_verifications SET verified_at=NOW() WHERE token_hash=%s AND expires_at>NOW() AND consumed_at IS NULL RETURNING phone', (phone_hash(data.token),))
+        verified = cursor.fetchone()
+        if not verified:
+            raise HTTPException(410, 'Verification expired. Request a new code.')
+        db.commit()
+    return {'verified': True, 'phone': verified['phone']}
 
 
 class AdminInvoiceRequest(BaseModel):
@@ -358,10 +481,17 @@ def create_paypal_order(data: ReservationRequest):
         logger.warning('PayPal order creation failed (%s).', type(exc).__name__)
         raise HTTPException(502, 'Unable to create the PayPal order.') from exc
     with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('''UPDATE phone_verifications SET consumed_at=NOW()
+            WHERE token_hash=%s AND phone=%s AND verified_at IS NOT NULL
+            AND expires_at>NOW() AND consumed_at IS NULL RETURNING verified_at''',
+            (phone_hash(data.verificationToken), data.phone.strip()))
+        if not cursor.fetchone():
+            raise HTTPException(403, 'Verify this phone number before booking.')
         cursor.execute(
             'INSERT INTO pending_paypal_orders (order_id, reservation_json) VALUES (%s, %s) ON CONFLICT (order_id) DO UPDATE SET reservation_json = EXCLUDED.reservation_json',
             (order_id, data.model_dump_json()),
         )
+        db.commit()
     return {'order_id': order_id}
 
 
@@ -402,16 +532,22 @@ def capture_paypal_order(order_id: str):
 
     data = ReservationRequest.model_validate_json(pending['reservation_json'])
     with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('SELECT verified_at FROM phone_verifications WHERE token_hash=%s AND phone=%s AND consumed_at IS NOT NULL',
+                       (phone_hash(data.verificationToken), data.phone.strip()))
+        verified = cursor.fetchone()
+        if not verified:
+            raise HTTPException(403, 'Phone verification is missing for this order.')
         cursor.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
-             paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency, payment_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
+             paypal_order_id, paypal_capture_id, deposit_amount, deposit_currency, payment_status, phone_verified_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
             'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(),
-            order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY, 'paid',
+            order_id, capture_id, PAYPAL_DEPOSIT_AMOUNT, PAYPAL_CURRENCY, 'paid', verified['verified_at'],
         ))
         reservation_id = cursor.fetchone()['id']
         cursor.execute('DELETE FROM pending_paypal_orders WHERE order_id = %s', (order_id,))
+        db.commit()
     send_paid_reservation_alert(data, reservation_id, capture_id)
     return {
         'status': 'success', 'reservation_id': reservation_id, 'capture_id': capture_id,
@@ -424,14 +560,22 @@ def create_free_reservation(data: ReservationRequest):
     if not data.name.strip() or not data.hotel.strip() or not data.phone.strip():
         raise HTTPException(422, 'Name, hotel, and phone number are required.')
     with closing(connect_db()) as db, db, db.cursor() as cursor:
+        cursor.execute('''UPDATE phone_verifications SET consumed_at=NOW()
+            WHERE token_hash=%s AND phone=%s AND verified_at IS NOT NULL
+            AND expires_at>NOW() AND consumed_at IS NULL RETURNING verified_at''',
+            (phone_hash(data.verificationToken), data.phone.strip()))
+        verified = cursor.fetchone()
+        if not verified:
+            raise HTTPException(403, 'Verify this phone number before booking.')
         cursor.execute('''INSERT INTO reservations
             (name, company, job_title, visit_date, party_size, vibe, budget, guide_type, hotel, phone,
-             payment_status)
+             payment_status, phone_verified_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id''', (
             data.name.strip(), data.company, data.jobTitle, str(data.visitDate), data.partySize,
-            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'free_reservation',
+            'Private VIP', data.budget, 'Fluent English Interpreter', data.hotel.strip(), data.phone.strip(), 'free_reservation', verified['verified_at'],
         ))
         reservation_id = cursor.fetchone()['id']
+        db.commit()
     text = (
         f'[무료 예약 요청] VIP 예약 #{reservation_id}\n'
         f'이름: {data.name}\n'
@@ -801,7 +945,7 @@ def home():
 @app.get('/{asset}')
 def static_asset(asset: str):
     allowed = {'analytics.js', 'index.html', 'admin.html', 'guide.html', 'course-results.js', 'courses.css', 'api-config.js', 
-               'booking-api.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png', 
+               'booking-api.js', 'country-codes.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png',
                'main pic1.png', 'main pic2.png', 'main pic3.png', 'main pic1.webp', 'main pic2.webp', 'main pic3.webp', 'main pic4.webp', 'main_pic5v2.webp', 
                'main pic7.webp', 'main_pic8.webp', 'main pic9.webp', 'main_pic10.webp', 'main pic11.webp', 'main_pic12.webp', 'main pic13.webp', 'main pic14.webp', 'main pic15.webp', 'main pic15.webp',
                'main pic16.webp', 'main pic17.webp', 'course-concept-600-v2.png', 

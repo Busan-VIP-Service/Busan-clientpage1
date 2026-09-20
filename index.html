@@ -315,6 +315,8 @@
         .course-preview small { display: block; margin-top: 9px; color: #857f70; font-size: 10px; line-height: 1.45; }
         @media (max-width: 520px) { .course-preview-gallery { grid-template-columns: 1fr; } }
         .content .contact-group { margin: 0; }
+        .content .contact-group select { flex: 0 0 165px; min-width: 0; font-size: 15px; }
+        .content .contact-group input { flex: 1; min-width: 0; }
         .content .contact-group select { flex: 0 0 100px; min-width: 0; }
         .content .contact-group input { flex: 1; min-width: 0; }
         .business-details { margin-top: 18px; }
@@ -346,6 +348,7 @@
     <script src="api-config.js"></script>
     <script src="analytics.js" defer></script>
     <script src="booking-api.js"></script>
+    <script src="country-codes.js" defer></script>
 </head>
 <body>
 
@@ -459,19 +462,16 @@
                 <input type="text" id="nameInput" autocomplete="name" placeholder="Full name" aria-required="true">
                 <label class="section-label" for="hotelInput">Hotel Name</label>
                 <input type="text" id="hotelInput" placeholder="e.g. Signiel Busan" aria-required="true">
-                <label class="section-label" for="contactInput">WhatsApp / Contact Number</label>
+                <label class="section-label" for="contactInput">Mobile number for SMS verification</label>
+                <input id="countrySearch" type="search" placeholder="Search country or calling code" aria-label="Search countries" style="margin-bottom:8px">
                 <div class="contact-group">
                     <select id="countryCode" aria-label="Country calling code">
-                    <option value="+1">🇺🇸 +1</option>
-                    <option value="+61">🇦🇺 +61</option>
-                    <option value="+82" selected>🇰🇷 +82</option>
-                    <option value="+81">🇯🇵 +81</option>
-                    <option value="+86">🇨🇳 +86</option>
-                    <option value="+44">🇬🇧 +44</option>
-                    <option value="+OTHER">🌐 Other</option>
                     </select>
                     <input type="text" id="contactInput" autocomplete="tel-national" inputmode="tel" placeholder="Phone number" aria-required="true">
                 </div>
+                <button id="sendPhoneCode" type="button">Send SMS code</button>
+                <div id="phoneCodeStep" hidden><input id="phoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="SMS code" aria-label="SMS verification code"><button id="checkPhoneCode" type="button">Verify number</button></div>
+                <p id="phoneVerificationStatus" role="status" aria-live="polite"></p>
                 <details class="business-details">
                     <summary>Business Information <span>Optional</span></summary>
                     <label class="section-label" for="companyInput">Company</label>
@@ -522,6 +522,44 @@
     <script>
         const selected = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
         const field = id => document.getElementById(id).value.trim();
+
+        const phoneVerification = { token: '', phone: '', verified: false, busy: false };
+        const currentPhone = () => field('countryCode') + field('contactInput').replace(/[^0-9]/g, '').replace(/^0+/, '');
+        const phoneStatus = message => document.getElementById('phoneVerificationStatus').textContent = message;
+        ['countryCode', 'contactInput'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+            phoneVerification.token = ''; phoneVerification.verified = false;
+            document.getElementById('phoneCodeStep').hidden = true;
+            phoneStatus('');
+        }));
+        document.getElementById('sendPhoneCode').addEventListener('click', async () => {
+            const phone = currentPhone();
+            if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { phoneStatus('Enter a valid mobile number with its country code.'); return; }
+            if (phoneVerification.busy) return;
+            phoneVerification.busy = true;
+            document.getElementById('sendPhoneCode').disabled = true;
+            phoneStatus('Sending SMS…');
+            try {
+                const result = await apiJson('/api/phone/start', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' }, body: JSON.stringify({ phone, countryCode: field('countryCode').slice(1) }) });
+                phoneVerification.token = result.token; phoneVerification.phone = phone; phoneVerification.verified = false;
+                document.getElementById('phoneCodeStep').hidden = false;
+                document.getElementById('phoneCode').focus();
+                phoneStatus('SMS sent. Enter the code within 10 minutes.');
+            } catch (error) { phoneStatus(error.message || 'Could not send SMS.'); }
+            finally { phoneVerification.busy = false; document.getElementById('sendPhoneCode').disabled = false; }
+        });
+        document.getElementById('checkPhoneCode').addEventListener('click', async () => {
+            if (phoneVerification.busy || !phoneVerification.token || phoneVerification.phone !== currentPhone()) return;
+            phoneVerification.busy = true;
+            document.getElementById('checkPhoneCode').disabled = true;
+            try {
+                const result = await apiJson('/api/phone/check', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-busan-request': '1' }, body: JSON.stringify({ token: phoneVerification.token, code: field('phoneCode') }) });
+                phoneVerification.verified = result.verified === true && result.phone === currentPhone();
+                if (!phoneVerification.verified) throw new Error('Phone verification failed.');
+                document.getElementById('phoneCodeStep').hidden = true;
+                phoneStatus(`Verified: ${result.phone}`);
+            } catch (error) { phoneStatus(error.message || 'Incorrect or expired code.'); }
+            finally { phoneVerification.busy = false; document.getElementById('checkPhoneCode').disabled = false; }
+        });
 
         const coursePreviews = {
             '600000 KRW per guest': {
@@ -575,7 +613,7 @@
                 name: field('nameInput'), company: field('companyInput'), jobTitle: field('titleInput'),
                 visitDate: field('dateInput'), partySize: selected('partySize'), budget: selected('budget'),
                 hotel: field('hotelInput'),
-                phone: `${field('countryCode')} ${field('contactInput')}`
+                phone: currentPhone(), verificationToken: phoneVerification.token || ''
             };
         }
 
@@ -587,7 +625,8 @@
                 { missing: !data.budget, label: 'VIP course', target: 'b1' },
                 { missing: !data.name, label: 'Full name', target: 'nameInput' },
                 { missing: !data.hotel, label: 'Hotel name', target: 'hotelInput' },
-                { missing: !field('contactInput'), label: 'WhatsApp / contact number', target: 'contactInput' }
+                { missing: !field('contactInput'), label: 'Mobile number', target: 'contactInput' },
+                { missing: !phoneVerification.verified || phoneVerification.phone !== currentPhone(), label: 'SMS phone verification', target: 'sendPhoneCode' }
             ];
             const missing = requiredFields.filter(item => item.missing);
             if (missing.length) {

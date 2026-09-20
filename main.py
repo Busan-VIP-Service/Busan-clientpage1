@@ -981,10 +981,10 @@ def static_asset(asset: str):
         'mobile_main.webp', 'main.webp', 'mainpic3.webp',
         
         # guide.html 4단계 타임라인 시안 이미지 (4장)
-        'door guide image.png',  # STEP 1: 입구 마중
+        'door guide image.webp',  # STEP 1: 입구 마중
         'guide image1.webp',     # STEP 2: 룸/테이블 세팅
         'main pic2.webp',        # STEP 3: 초이스 라인업 (메인 겸용)
-        'exit guide.png',        # STEP 4: 퇴장/택시 배웅
+        'exit guide.webp',        # STEP 4: 퇴장/택시 배웅
         
         # 코스 프리뷰 이미지
         'course-concept-600-v2.png',

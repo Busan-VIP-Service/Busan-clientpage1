@@ -965,18 +965,37 @@ def home():
 
 @app.get('/{asset}')
 def static_asset(asset: str):
-    allowed = {'analytics.js', 'mainpic6.webp', 'main.webp', 'mobile_main.webp', 'mainpic.webp', 'mainpic2.webp', 'mainpic3.webp', 'mainpic4.webp', 'mainpic5.webp', 'index.html', 'admin.html', 'guide.html', 'course-results.js', 'courses.css', 'api-config.js', 
-               'booking-api.js', 'country-codes.js', 'google9b519aff934fd839.html', 'robots.txt', 'sitemap.xml', 'midnightbusan.png', 'hero-private-lounge-v1.png',
-               'main pic1.png', 'main pic2.png', 'main pic3.png', 'main pic1.webp', 'main pic2.webp', 'main pic3.webp', 'main pic4.webp', 'main_pic5v2.webp', 
-               'main pic7.webp', 'main_pic8.webp', 'main pic9.webp', 'main_pic10.webp', 'main pic11.webp', 'main_pic12.webp', 'main pic13.webp', 'main pic14.webp', 'main pic15.webp',
-               'main pic16.webp', 'main pic17.webp', 'course-concept-600-v2.png', 
-               'course-concept-800-v2.png', 'course-concept-1200.png'}
-    if asset not in allowed and not re.fullmatch(r'(?:main|mobile_main|image1 \(\d+\))\.png', asset):
-        raise HTTPException(404)
-    path = ROOT / asset
-    if not path.is_file():
-        raise HTTPException(404)
-    return FileResponse(path)
+    allowed = {
+        # HTML 페이지 및 SEO/설정 파일
+        'index.html', 'admin.html', 'guide.html', 
+        'robots.txt', 'sitemap.xml', 'google9b519aff934fd839.html',
+        
+        # JS 스크립트 및 스타일
+        'analytics.js', 'api-config.js', 'booking-api.js', 
+        'country-codes.js', 'course-results.js', 'courses.css',
+        
+        # 메타/로고 이미지
+        'midnightbusan.png',
+        
+        # index.html 메인 캐러셀 이미지 (3장)
+        'mobile_main.webp', 'main.webp', 'mainpic3.webp',
+        
+        # guide.html 4단계 타임라인 시안 이미지 (4장)
+        'door guide image.png',  # STEP 1: 입구 마중
+        'guide image1.webp',     # STEP 2: 룸/테이블 세팅
+        'main pic2.webp',        # STEP 3: 초이스 라인업 (메인 겸용)
+        'exit guide.png',        # STEP 4: 퇴장/택시 배웅
+        
+        # 코스 프리뷰 이미지
+        'course-concept-600-v2.png',
+        'course-concept-800-v2.png',
+        'course-concept-1200.png'
+    }
+
+    if asset not in allowed:
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    return FileResponse(asset)
 
 if __name__ == '__main__':
     import uvicorn

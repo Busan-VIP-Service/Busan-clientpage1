@@ -861,7 +861,7 @@ def new_admin_logout(request: Request, response: Response):
 
 @app.get('/api/admin/reservations')
 def admin_reservations(request: Request):
-    require_admin(request)
+    require_new_admin(request)
     with closing(connect_db()) as db, db.cursor() as cursor:
         cursor.execute('''SELECT id, name, visit_date, party_size, budget, hotel, phone,
             payment_status, deposit_amount, deposit_currency, created_at

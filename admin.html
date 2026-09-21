@@ -40,8 +40,8 @@
         <p class="muted" style="font-size:12px;margin-bottom:0">For a 1:1 chat, open the bot in Telegram and send /start first.</p>
       </section>
       <div class="grid">
-        <section class="card"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
-        <section class="card">
+        <section class="card" id="reservationsPanel"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
+        <section class="card" id="invoicePanel">
           <h2 class="panel-title">Create a PayPal payment request</h2>
           <label class="field"><span>Customer name</span><input id="customerName" placeholder="Customer name"></label>
           <label class="field"><span>Customer email <small class="muted">Optional — saved for your records</small></span><input id="customerEmail" type="email" placeholder="customer@example.com"></label>
@@ -75,6 +75,7 @@
     const authBase=isNewAdmin?'/api/admin-new':'/api/admin';
     $('passwordLabel').textContent=isNewAdmin?'8-digit admin PIN':'6-digit admin PIN';
     $('password').maxLength=isNewAdmin?8:6;
+    if(!isNewAdmin){$('reservationsPanel').classList.add('hidden');$('invoicePanel').style.gridColumn='1 / -1'}
     async function api(path,options={}){
       const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','x-admin-request':'1',...(options.headers||{})}});
       const raw=await response.text();let data;
@@ -108,11 +109,11 @@
     function updateTotal(){const value=id=>Number($(id).value)||0;const course=value('courseUsd')*Math.max(1,Math.floor(value('guestCount')));const subtotal=Math.max(0,course+value('serviceFeeUsd')+value('additionalUsd'));const discount=Math.max(0,Math.min(20,value('discountPercent')));const discountAmount=subtotal*discount/100;const total=subtotal-discountAmount;$('subtotal').textContent='US$'+subtotal.toFixed(2);$('discountLabel').textContent=`Discount (${discount}%)`;$('discountAmount').textContent='− US$'+discountAmount.toFixed(2);$('total').textContent='US$'+total.toFixed(2)}
     document.querySelectorAll('#courseButtons button').forEach(button=>button.onclick=()=>{document.querySelectorAll('#courseButtons button').forEach(x=>x.classList.remove('active'));button.classList.add('active');$('courseName').value=button.dataset.course;$('courseUsd').value=button.dataset.usd;updateTotal()});
     ['courseUsd','guestCount','serviceFeeUsd','additionalUsd','discountPercent'].forEach(id=>$(id).addEventListener('input',updateTotal));
-    $('loginButton').onclick=async()=>{try{$('loginStatus').textContent='Signing in…';await api(authBase+'/login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadReservations(),loadAnalytics()]);$('loginStatus').textContent=''}catch(e){$('loginStatus').textContent=e.message}};
+    $('loginButton').onclick=async()=>{try{$('loginStatus').textContent='Signing in…';await api(authBase+'/login',{method:'POST',body:JSON.stringify({password:$('password').value})});$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadAnalytics(),...(isNewAdmin?[loadReservations()]:[])]);$('loginStatus').textContent=''}catch(e){$('loginStatus').textContent=e.message}};
     $('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginButton').click()});
     $('logoutButton').onclick=async()=>{await api(authBase+'/logout',{method:'POST',body:'{}'});location.reload()};
     if(isNewAdmin)$('invoiceButton').onclick=async()=>{if(!$('customerName').value.trim()){$('invoiceStatus').textContent='Enter the customer name first.';$('customerName').focus();return}const button=$('invoiceButton');button.disabled=true;$('invoiceStatus').textContent='Creating secure PayPal payment request…';$('result').classList.add('hidden');try{const data=await api('/api/admin/invoices',{method:'POST',body:JSON.stringify({reservationId:selectedReservation?.id||null,customerName:$('customerName').value.trim(),customerEmail:$('customerEmail').value.trim(),courseName:$('courseName').value.trim(),courseUsd:Number($('courseUsd').value)||0,guestCount:Math.max(1,Math.floor(Number($('guestCount').value)||1)),interpreterUsd:Number($('serviceFeeUsd').value)||0,additionalUsd:Number($('additionalUsd').value)||0,discountPercent:Number($('discountPercent').value)||0,note:$('note').value.trim()})});$('resultTitle').textContent=`${data.invoice_id} · US$${data.total}`;$('payerLink').textContent=data.payer_url;$('payerLink').href=data.payer_url;$('openLink').href=data.payer_url;$('whatsappLink').href='https://wa.me/?text='+encodeURIComponent(`Your PayPal payment request is ready: ${data.payer_url}`);if(data.qr_image){$('qr').src='data:image/png;base64,'+data.qr_image;$('qr').classList.remove('hidden')}else{$('qr').classList.add('hidden')}$('result').classList.remove('hidden');$('invoiceStatus').textContent=`Payment request created with ${data.discount_percent}% discount.`}catch(e){$('invoiceStatus').textContent=e.message+(e.indeterminate||e instanceof TypeError?' Check PayPal for an existing request before trying again.':'')}finally{button.disabled=false}};
-    api(authBase+'/session').then(async()=>{$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadReservations(),loadAnalytics()])}).catch(()=>{});updateTotal();
+    api(authBase+'/session').then(async()=>{$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');await Promise.all([loadAnalytics(),...(isNewAdmin?[loadReservations()]:[])])}).catch(()=>{});updateTotal();
   </script>
 </body>
 </html>

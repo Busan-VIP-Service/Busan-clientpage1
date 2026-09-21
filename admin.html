@@ -24,12 +24,11 @@
     <section id="dashboard" class="hidden">
       <header class="top"><div><div class="eyebrow">PRIVATE ADMIN</div><h1>Concierge Desk</h1></div><button class="ghost" id="logoutButton">Sign out</button></header>
       <section class="card" style="margin-bottom:18px">
-        <div class="top"><h2 class="panel-title">페이지 조회수</h2><button class="ghost" id="refreshAnalytics">새로고침</button></div>
+        <div class="top"><h2 class="panel-title">참고용 가상 조회수</h2><button class="ghost" id="refreshAnalytics">새로고침</button></div>
         <div id="analyticsStatus" class="muted" role="status">집계를 불러오는 중…</div>
         <div id="analyticsContent" hidden>
           <div class="course-buttons" id="viewTotals" style="margin:16px 0"></div>
           <h3>최근 30일 유입</h3><div id="viewSources" class="muted"></div>
-          <details style="margin-top:16px" open><summary>오늘 시간대별 방문</summary><div style="max-height:300px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr><th>시간 (한국 시간)</th><th>방문</th></tr></thead><tbody id="viewHours"></tbody></table></div></details>
           <details style="margin-top:16px"><summary>최근 30일 날짜별 조회수</summary><div style="max-height:300px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr><th>날짜 (한국 시간)</th><th>조회수</th></tr></thead><tbody id="viewDays"></tbody></table></div></details>
         </div>
         <p class="muted" style="font-size:12px">조회수는 페이지가 열린 횟수이며 새로고침도 포함됩니다. 방문자 수와는 다릅니다. 집계 설치 이후부터 기록하며 로그인한 관리자의 조회는 제외합니다. 직접 방문에는 구분 표시 없는 QR·앱 유입도 포함됩니다.</p>
@@ -94,7 +93,6 @@
         const number=n=>Number(n).toLocaleString('ko-KR');
         $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${label}</span><strong style="display:block;font-size:28px;margin-top:8px">${number(n)}</strong></div>`).join('');
         $('viewSources').textContent=[['qr','QR'],['direct','직접 / 출처 없음'],['search','검색'],['referral','외부 링크']].map(([key,label])=>`${label}: ${number(data.sources[key]||0)}`).join(' · ');
-        $('viewHours').innerHTML=data.hours.map(h=>`<tr><td>${String(h.hour).padStart(2,'0')}:00–${String(h.hour).padStart(2,'0')}:59</td><td>${number(h.views)}</td></tr>`).join('')+(data.unknown_today?`<tr><td>시간 기록 없음</td><td>${number(data.unknown_today)}</td></tr>`:'');
         $('viewDays').innerHTML=data.days.map(d=>`<tr><td>${escapeHtml(d.day)}</td><td>${number(d.views)}</td></tr>`).join('');
         $('analyticsContent').hidden=false;
         $('analyticsStatus').textContent=data.started ? `첫 기록: ${data.started} · 방금 업데이트됨` : '아직 기록된 조회가 없습니다.';

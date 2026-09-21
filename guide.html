@@ -139,8 +139,13 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 10px;
+            min-width: 0;
         }
         .step-num {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            white-space: nowrap;
             background: linear-gradient(135deg, #d6ad4e, #9c7122);
             color: #111;
             font-size: 11px;
@@ -150,12 +155,14 @@
             letter-spacing: 0.5px;
         }
         .timeline-title {
+            min-width: 0;
             color: #f1ebd8;
             font-size: 16px;
             font-weight: 600;
         }
         .step-icon {
             margin-left: auto;
+            flex: 0 0 auto;
             color: #d4af37;
             font-size: 18px;
         }

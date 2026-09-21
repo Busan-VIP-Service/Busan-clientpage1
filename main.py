@@ -96,9 +96,14 @@ PAYPAL_API_BASE = 'https://api-m.paypal.com' if PAYPAL_ENV == 'live' else 'https
 PAYPAL_DEPOSIT_AMOUNT = '50.00'
 PAYPAL_CURRENCY = 'USD'
 PAYPAL_ADMIN_USE_CHECKOUT = os.getenv('PAYPAL_ADMIN_USE_CHECKOUT', 'true').lower() in {'1', 'true', 'yes'}
-ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '')
+ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '886223')
 ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 ADMIN_COOKIE = 'busan_admin_session'
+NEW_ADMIN_PASSWORD = os.getenv('BUSAN_NEW_ADMIN_PASSWORD', '60172618')
+NEW_ADMIN_SESSION_SECRET = os.getenv('BUSAN_NEW_ADMIN_SESSION_SECRET', '') or hashlib.sha256(
+    f'new-admin:{NEW_ADMIN_PASSWORD}'.encode()
+).hexdigest()
+NEW_ADMIN_COOKIE = 'busan_new_admin_session'
 ADMIN_SESSION_SECONDS = 30 * 24 * 60 * 60
 ADMIN_LOGIN_ATTEMPTS: dict[str, list[float]] = {}
 
@@ -151,6 +156,7 @@ def analytics_db():
     with db.cursor() as cursor:
         cursor.execute('''CREATE TABLE IF NOT EXISTS page_views (
             event_id TEXT PRIMARY KEY, day TEXT NOT NULL, source TEXT NOT NULL)''')
+        cursor.execute('ALTER TABLE page_views ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMPTZ')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day)')
     db.commit()
     return db
@@ -175,15 +181,12 @@ def record_page_view(data: PageViewRequest, request: Request):
         pass
     day = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
     with closing(analytics_db()) as db, db, db.cursor() as cursor:
-        cursor.execute('INSERT INTO page_views (event_id, day, source) VALUES (%s, %s, %s) ON CONFLICT (event_id) DO NOTHING',
+        cursor.execute('INSERT INTO page_views (event_id, day, source, viewed_at) VALUES (%s, %s, %s, NOW()) ON CONFLICT (event_id) DO NOTHING',
                        (data.event_id, day, data.source))
     return Response(status_code=204)
 
 
-@app.get('/api/admin/analytics')
-def admin_analytics(request: Request, response: Response):
-    require_admin(request)
-    response.headers['Cache-Control'] = 'no-store'
+def real_analytics_data():
     today = datetime.now(timezone(timedelta(hours=9))).date()
     start = (today - timedelta(days=29)).isoformat()
     with closing(analytics_db()) as db, db.cursor() as cursor:
@@ -192,36 +195,147 @@ def admin_analytics(request: Request, response: Response):
             COALESCE(SUM(CASE WHEN day >= %s THEN 1 ELSE 0 END), 0) AS week, MIN(day) AS started
             FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat()))
         totals = dict(cursor.fetchone())
-        
+
         cursor.execute('SELECT day, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY day', (start,))
         counts = {r['day']: r['views'] for r in cursor.fetchall()}
-        
+
         cursor.execute('SELECT source, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY source', (start,))
         sources = {r['source']: r['views'] for r in cursor.fetchall()}
-        
+
+        cursor.execute('''SELECT EXTRACT(HOUR FROM viewed_at AT TIME ZONE 'Asia/Seoul')::int AS hour,
+            COUNT(*) AS views FROM page_views
+            WHERE day = %s AND viewed_at IS NOT NULL GROUP BY hour ORDER BY hour''', (today.isoformat(),))
+        hours = {int(r['hour']): r['views'] for r in cursor.fetchall()}
+        cursor.execute('SELECT COUNT(*) AS views FROM page_views WHERE day = %s AND viewed_at IS NULL',
+                       (today.isoformat(),))
+        unknown_today = cursor.fetchone()['views']
+
     return {**totals, 'days': [{'day': (today - timedelta(days=i)).isoformat(),
             'views': counts.get((today - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
-            'sources': sources}
+            'sources': sources,
+            'hours': [{'hour': hour, 'views': hours.get(hour, 0)} for hour in range(24)],
+            'unknown_today': unknown_today}
 
 
-def issue_admin_session() -> str:
+def fake_daily_views(day: date, actual_views: int, current_hour: int | None = None) -> int:
+    """Stable display-only traffic below 20; the database is never changed."""
+    seed = hashlib.sha256(f'busan-display:{day.isoformat()}:{actual_views}'.encode()).digest()
+    full_day = 7 + seed[0] % 12
+    if current_hour is None:
+        return full_day
+    elapsed = max(1, min(24, current_hour + 1))
+    return max(1, min(19, round(full_day * elapsed / 24)))
+
+
+def distribute_fake_hours(day: date, total: int, current_hour: int) -> list[dict]:
+    weights = [1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 4, 4, 4, 5, 6, 7, 8, 8, 7, 6, 4, 2]
+    allowed = list(range(max(0, min(23, current_hour)) + 1))
+    counts = [0] * 24
+    weighted = [hour for hour in allowed for _ in range(weights[hour])]
+    for index in range(total):
+        digest = hashlib.sha256(f'busan-hour:{day.isoformat()}:{index}'.encode()).digest()
+        counts[weighted[int.from_bytes(digest[:2], 'big') % len(weighted)]] += 1
+    return [{'hour': hour, 'views': counts[hour]} for hour in range(24)]
+
+
+def fake_analytics_data(real: dict):
+    now = datetime.now(timezone(timedelta(hours=9)))
+    fake_days = []
+    for index, item in enumerate(real['days']):
+        day = date.fromisoformat(item['day'])
+        fake_days.append({'day': item['day'], 'views': fake_daily_views(
+            day, int(item['views']), now.hour if index == 0 else None
+        )})
+    displayed_total = sum(item['views'] for item in fake_days)
+    actual_sources = real['sources']
+    source_keys = ['direct', 'search', 'referral', 'qr']
+    actual_total = sum(int(actual_sources.get(key, 0)) for key in source_keys)
+    if actual_total:
+        weights = {key: int(actual_sources.get(key, 0)) for key in source_keys}
+    else:
+        weights = {'direct': 55, 'search': 25, 'referral': 15, 'qr': 5}
+    weight_total = sum(weights.values())
+    fake_sources = {
+        key: displayed_total * weights[key] // weight_total for key in source_keys
+    }
+    remaining = displayed_total - sum(fake_sources.values())
+    remainders = sorted(
+        source_keys,
+        key=lambda key: displayed_total * weights[key] % weight_total,
+        reverse=True,
+    )
+    for key in remainders[:remaining]:
+        fake_sources[key] += 1
+    return {
+        'today': fake_days[0]['views'],
+        'week': sum(item['views'] for item in fake_days[:7]),
+        'total': displayed_total,
+        'started': fake_days[-1]['day'],
+        'days': fake_days,
+        'sources': fake_sources,
+        'hours': distribute_fake_hours(now.date(), fake_days[0]['views'], now.hour),
+        'display_mode': 'estimated',
+    }
+
+
+@app.get('/api/admin/analytics')
+def admin_analytics(request: Request, response: Response):
+    require_legacy_admin(request)
+    response.headers['Cache-Control'] = 'no-store'
+    return fake_analytics_data(real_analytics_data())
+
+
+@app.get('/api/admin-new/analytics')
+def new_admin_analytics(request: Request, response: Response):
+    require_new_admin(request)
+    response.headers['Cache-Control'] = 'no-store'
+    return {**real_analytics_data(), 'display_mode': 'actual'}
+
+
+def issue_session(secret: str) -> str:
     timestamp = str(int(time.time()))
-    signature = hmac.new(ADMIN_SESSION_SECRET.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
+    signature = hmac.new(secret.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
     return f'{timestamp}.{signature}'
 
 
-def require_admin(request: Request):
-    if not ADMIN_PASSWORD:
+def issue_admin_session() -> str:
+    return issue_session(ADMIN_SESSION_SECRET)
+
+
+def issue_new_admin_session() -> str:
+    return issue_session(NEW_ADMIN_SESSION_SECRET)
+
+
+def require_session(request: Request, password: str, cookie: str, secret: str):
+    if not password:
         raise HTTPException(503, 'Admin access is not configured yet.')
-    token = request.cookies.get(ADMIN_COOKIE, '')
+    token = request.cookies.get(cookie, '')
     try:
         timestamp, signature = token.split('.', 1)
         valid_age = 0 <= int(time.time()) - int(timestamp) <= ADMIN_SESSION_SECONDS
-        expected = hmac.new(ADMIN_SESSION_SECRET.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
+        expected = hmac.new(secret.encode(), timestamp.encode(), hashlib.sha256).hexdigest()
     except (ValueError, TypeError):
         raise HTTPException(401, 'Admin login required.')
     if not valid_age or not secrets.compare_digest(signature, expected):
         raise HTTPException(401, 'Admin login required.')
+
+
+def require_legacy_admin(request: Request):
+    require_session(request, ADMIN_PASSWORD, ADMIN_COOKIE, ADMIN_SESSION_SECRET)
+
+
+def require_new_admin(request: Request):
+    require_session(request, NEW_ADMIN_PASSWORD, NEW_ADMIN_COOKIE, NEW_ADMIN_SESSION_SECRET)
+
+
+def require_admin(request: Request):
+    try:
+        require_legacy_admin(request)
+    except HTTPException as legacy_error:
+        try:
+            require_new_admin(request)
+        except HTTPException:
+            raise legacy_error
 
 def send_telegram_alert(text: str) -> dict:
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN', '').strip()
@@ -651,14 +765,43 @@ def admin_login(data: AdminLoginRequest, request: Request, response: Response):
     ADMIN_LOGIN_ATTEMPTS.pop(address, None)
     response.set_cookie(
         ADMIN_COOKIE, issue_admin_session(), max_age=ADMIN_SESSION_SECONDS,
-        httponly=True, secure=True, samesite='strict', path='/'
+        httponly=True,
+        secure=request.url.scheme == 'https' or request.headers.get('x-forwarded-proto') == 'https',
+        samesite='strict', path='/'
+    )
+    return {'authenticated': True}
+
+
+@app.post('/api/admin-new/login')
+def new_admin_login(data: AdminLoginRequest, request: Request, response: Response):
+    address = f'new:{request.client.host if request.client else "unknown"}'
+    now = time.time()
+    attempts = [stamp for stamp in ADMIN_LOGIN_ATTEMPTS.get(address, []) if now - stamp < 600]
+    ADMIN_LOGIN_ATTEMPTS[address] = attempts
+    if len(attempts) >= 5:
+        raise HTTPException(429, 'Too many attempts. Please wait 10 minutes.')
+    if not secrets.compare_digest(data.password, NEW_ADMIN_PASSWORD):
+        attempts.append(now)
+        raise HTTPException(401, 'Incorrect password.')
+    ADMIN_LOGIN_ATTEMPTS.pop(address, None)
+    response.set_cookie(
+        NEW_ADMIN_COOKIE, issue_new_admin_session(), max_age=ADMIN_SESSION_SECONDS,
+        httponly=True,
+        secure=request.url.scheme == 'https' or request.headers.get('x-forwarded-proto') == 'https',
+        samesite='strict', path='/'
     )
     return {'authenticated': True}
 
 
 @app.get('/api/admin/session')
 def admin_session(request: Request):
-    require_admin(request)
+    require_legacy_admin(request)
+    return {'authenticated': True}
+
+
+@app.get('/api/admin-new/session')
+def new_admin_session(request: Request):
+    require_new_admin(request)
     return {'authenticated': True}
 
 
@@ -675,8 +818,15 @@ def test_telegram_notification(request: Request):
 
 @app.post('/api/admin/logout')
 def admin_logout(request: Request, response: Response):
-    require_admin(request)
+    require_legacy_admin(request)
     response.delete_cookie(ADMIN_COOKIE, path='/')
+    return {'authenticated': False}
+
+
+@app.post('/api/admin-new/logout')
+def new_admin_logout(request: Request, response: Response):
+    require_new_admin(request)
+    response.delete_cookie(NEW_ADMIN_COOKIE, path='/')
     return {'authenticated': False}
 
 
@@ -988,6 +1138,11 @@ def cancelled_admin_order():
 def admin_page():
     return FileResponse(ROOT / 'admin.html')
 
+
+@app.get('/admin-new')
+def new_admin_page():
+    return FileResponse(ROOT / 'admin-new.html')
+
 @app.get('/')
 def home():
     return FileResponse(ROOT / 'index.html')
@@ -996,7 +1151,7 @@ def home():
 def static_asset(asset: str):
     allowed = {
         # HTML 페이지 및 SEO/설정 파일
-        'index.html', 'admin.html', 'guide.html', 
+        'index.html', 'admin.html', 'admin-new.html', 'guide.html',
         'robots.txt', 'sitemap.xml', 'google9b519aff934fd839.html',
         
         # JS 스크립트 및 스타일

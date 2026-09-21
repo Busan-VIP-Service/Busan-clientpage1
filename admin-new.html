@@ -72,7 +72,7 @@
   </main>
   <script>
     const $=id=>document.getElementById(id); let reservations=[],selectedReservation=null;
-    const isNewAdmin=false;
+    const isNewAdmin=true;
     const authBase=isNewAdmin?'/api/admin-new':'/api/admin';
     $('passwordLabel').textContent=isNewAdmin?'8-digit admin PIN':'6-digit admin PIN';
     $('password').maxLength=isNewAdmin?8:6;

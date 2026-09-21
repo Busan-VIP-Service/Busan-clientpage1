@@ -238,42 +238,71 @@ def distribute_fake_hours(day: date, total: int, current_hour: int) -> list[dict
     return [{'hour': hour, 'views': counts[hour]} for hour in range(24)]
 
 
+LEGACY_ANALYTICS_END = date(2026, 9, 22)
+LEGACY_ANALYTICS_STARTED = date(2026, 9, 15)
+LEGACY_DAY_COUNTS = {
+    '2026-09-15': 4,
+    '2026-09-16': 65,
+    '2026-09-17': 97,
+    '2026-09-18': 324,
+    '2026-09-19': 59,
+    '2026-09-20': 22,
+    '2026-09-21': 18,
+    '2026-09-22': 0,
+}
+LEGACY_SOURCE_COUNTS = {'direct': 472, 'search': 116, 'referral': 1, 'qr': 0}
+
+
 def fake_analytics_data(real: dict):
     now = datetime.now(timezone(timedelta(hours=9)))
+    actual_by_day = {item['day']: int(item['views']) for item in real['days']}
+
+    def displayed_views(day: date) -> int:
+        if day <= LEGACY_ANALYTICS_END:
+            return LEGACY_DAY_COUNTS.get(day.isoformat(), 0)
+        return fake_daily_views(
+            day,
+            actual_by_day.get(day.isoformat(), 0),
+            now.hour if day == now.date() else None,
+        )
+
     fake_days = []
-    for index, item in enumerate(real['days']):
-        day = date.fromisoformat(item['day'])
-        fake_days.append({'day': item['day'], 'views': fake_daily_views(
-            day, int(item['views']), now.hour if index == 0 else None
-        )})
-    displayed_total = sum(item['views'] for item in fake_days)
-    actual_sources = real['sources']
+    for index in range(30):
+        day = now.date() - timedelta(days=index)
+        fake_days.append({'day': day.isoformat(), 'views': displayed_views(day)})
+
+    displayed_total = sum(LEGACY_DAY_COUNTS.values())
+    day = LEGACY_ANALYTICS_END + timedelta(days=1)
+    while day <= now.date():
+        displayed_total += displayed_views(day)
+        day += timedelta(days=1)
+
     source_keys = ['direct', 'search', 'referral', 'qr']
-    actual_total = sum(int(actual_sources.get(key, 0)) for key in source_keys)
-    if actual_total:
-        weights = {key: int(actual_sources.get(key, 0)) for key in source_keys}
-    else:
-        weights = {'direct': 55, 'search': 25, 'referral': 15, 'qr': 5}
+    fake_sources = dict(LEGACY_SOURCE_COUNTS)
+    extra_total = displayed_total - sum(fake_sources.values())
+    weights = {'direct': 80, 'search': 16, 'referral': 3, 'qr': 1}
     weight_total = sum(weights.values())
-    fake_sources = {
-        key: displayed_total * weights[key] // weight_total for key in source_keys
-    }
-    remaining = displayed_total - sum(fake_sources.values())
+    additions = {key: extra_total * weights[key] // weight_total for key in source_keys}
+    remaining = extra_total - sum(additions.values())
     remainders = sorted(
         source_keys,
-        key=lambda key: displayed_total * weights[key] % weight_total,
+        key=lambda key: extra_total * weights[key] % weight_total,
         reverse=True,
     )
     for key in remainders[:remaining]:
-        fake_sources[key] += 1
+        additions[key] += 1
+    for key in source_keys:
+        fake_sources[key] += additions[key]
+
+    today_views = fake_days[0]['views']
     return {
-        'today': fake_days[0]['views'],
+        'today': today_views,
         'week': sum(item['views'] for item in fake_days[:7]),
         'total': displayed_total,
-        'started': fake_days[-1]['day'],
+        'started': LEGACY_ANALYTICS_STARTED.isoformat(),
         'days': fake_days,
         'sources': fake_sources,
-        'hours': distribute_fake_hours(now.date(), fake_days[0]['views'], now.hour),
+        'hours': distribute_fake_hours(now.date(), today_views, now.hour),
         'display_mode': 'estimated',
     }
 

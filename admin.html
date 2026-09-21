@@ -34,6 +34,11 @@
         <p class="muted" style="font-size:12px">조회수는 페이지가 열린 횟수이며 새로고침도 포함됩니다. 방문자 수와는 다릅니다. 집계 설치 이후부터 기록하며 로그인한 관리자의 조회는 제외합니다. 직접 방문에는 구분 표시 없는 QR·앱 유입도 포함됩니다.</p>
         <p class="muted" style="font-size:12px">QR을 별도로 집계하려면 이 주소로 QR을 만드세요: <a style="color:#f0cf78;word-break:break-all" href="https://midnightsunrisebusan.com/?utm_source=qr">https://midnightsunrisebusan.com/?utm_source=qr</a></p>
       </section>
+      <section class="card" style="margin-bottom:18px">
+        <div class="top" style="margin-bottom:8px"><h2 class="panel-title">Telegram notification check</h2><button class="ghost" id="telegramTestButton" type="button">Send test message</button></div>
+        <div id="telegramTestStatus" class="muted" role="status">Send a test message to check the current bot token and chat ID.</div>
+        <p class="muted" style="font-size:12px;margin-bottom:0">For a 1:1 chat, open the bot in Telegram and send /start first.</p>
+      </section>
       <div class="grid">
         <section class="card"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
         <section class="card">
@@ -82,6 +87,7 @@
       finally { $('refreshAnalytics').disabled=false; }
     }
     $('refreshAnalytics').onclick=loadAnalytics;
+    $('telegramTestButton').onclick=async()=>{const button=$('telegramTestButton'),status=$('telegramTestStatus');button.disabled=true;status.textContent='Sending test message…';try{await api('/api/admin/telegram/test',{method:'POST',body:'{}'});status.textContent='Test message sent. Check the configured Telegram chat.'}catch(error){status.textContent='Telegram delivery failed: '+error.message}finally{button.disabled=false}};
     async function loadReservations(){const data=await api('/api/admin/reservations');reservations=data.reservations;$('reservations').replaceChildren(...(reservations.length?reservations.map(renderReservation):[Object.assign(document.createElement('p'),{className:'muted',textContent:'No saved reservations yet.'})]))}
     function renderReservation(r){const b=document.createElement('button');b.className='reservation';b.innerHTML=`<strong>#${r.id} · ${escapeHtml(r.name)}</strong><span>${escapeHtml(r.visit_date)} · ${escapeHtml(r.party_size)} guests · ${escapeHtml(r.budget)}</span><span>${escapeHtml(r.payment_status||'unpaid')} · ${escapeHtml(r.hotel)}</span>`;b.onclick=()=>selectReservation(r,b);return b}
     function escapeHtml(v){const d=document.createElement('div');d.textContent=v??'';return d.innerHTML}

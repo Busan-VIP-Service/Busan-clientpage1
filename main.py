@@ -89,9 +89,6 @@ def send_email_alert(text: str, reservation_id: int, subject: str):
     except Exception as exc:
         logger.warning('Email alert failed (%s), reservation #%s remains saved.', type(exc).__name__, reservation_id)
 
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
-
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 PAYPAL_ENV = os.getenv('PAYPAL_ENV', 'sandbox').lower()
@@ -226,19 +223,40 @@ def require_admin(request: Request):
     if not valid_age or not secrets.compare_digest(signature, expected):
         raise HTTPException(401, 'Admin login required.')
 
-def send_telegram_alert(text: str):
-    if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == '여기에_텔레그램_봇_토큰_입력':
+def send_telegram_alert(text: str) -> dict:
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN', '').strip()
+    chat_id = os.getenv('TELEGRAM_CHAT_ID', '').strip()
+    if not bot_token or bot_token == '여기에_텔레그램_봇_토큰_입력':
         logger.warning('Telegram alert skipped: bot token is missing.')
-        return
+        return {'ok': False, 'detail': 'TELEGRAM_BOT_TOKEN is missing.'}
+    if not chat_id:
+        logger.warning('Telegram alert skipped: chat ID is missing.')
+        return {'ok': False, 'detail': 'TELEGRAM_CHAT_ID is missing.'}
     try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         with httpx.Client(timeout=10) as client:
-            response = client.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": text})
+            response = client.post(url, json={'chat_id': chat_id, 'text': text})
+        try:
             result = response.json()
-            if not response.is_success or not result.get('ok'):
-                logger.warning('Telegram alert rejected: %s', result.get('description', 'Unknown API error'))
+        except ValueError:
+            result = {}
+        if response.is_success and isinstance(result, dict) and result.get('ok') is True:
+            return {'ok': True}
+        description = str(result.get('description', f'HTTP {response.status_code}') if isinstance(result, dict) else f'HTTP {response.status_code}')[:200]
+        hint = ''
+        lowered = description.lower()
+        if response.status_code == 401 or 'unauthorized' in lowered:
+            hint = ' Check the bot token and restart the server after changing it.'
+        elif 'chat not found' in lowered or 'can\'t initiate conversation' in lowered:
+            hint = ' Open the 1:1 chat with this bot, send /start, and verify the numeric chat ID.'
+        elif 'bot was blocked' in lowered:
+            hint = ' Unblock the bot in the destination chat.'
+        detail = description + hint
+        logger.warning('Telegram alert rejected (HTTP %s): %s', response.status_code, description)
+        return {'ok': False, 'detail': detail}
     except Exception as exc:
         logger.warning('Telegram alert failed (%s).', type(exc).__name__)
+        return {'ok': False, 'detail': f'Telegram request failed ({type(exc).__name__}). Check server connectivity and logs.'}
 
 class ReservationRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -642,6 +660,17 @@ def admin_login(data: AdminLoginRequest, request: Request, response: Response):
 def admin_session(request: Request):
     require_admin(request)
     return {'authenticated': True}
+
+
+@app.post('/api/admin/telegram/test')
+def test_telegram_notification(request: Request):
+    require_admin(request)
+    if request.headers.get('x-admin-request') != '1':
+        raise HTTPException(403, 'Invalid admin request.')
+    result = send_telegram_alert('Midnight Sunrise Busan: Telegram notification test.')
+    if not result['ok']:
+        raise HTTPException(502, result['detail'])
+    return {'sent': True}
 
 
 @app.post('/api/admin/logout')

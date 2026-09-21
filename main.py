@@ -99,7 +99,7 @@ PAYPAL_ADMIN_USE_CHECKOUT = os.getenv('PAYPAL_ADMIN_USE_CHECKOUT', 'true').lower
 ADMIN_PASSWORD = os.getenv('BUSAN_ADMIN_PASSWORD', '886223')
 ADMIN_SESSION_SECRET = os.getenv('BUSAN_ADMIN_SESSION_SECRET', '') or hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest()
 ADMIN_COOKIE = 'busan_admin_session'
-NEW_ADMIN_PASSWORD = os.getenv('BUSAN_NEW_ADMIN_PASSWORD', '60172618')
+NEW_ADMIN_PASSWORD = os.getenv('BUSAN_NEW_ADMIN_PASSWORD', '60712618')
 NEW_ADMIN_SESSION_SECRET = os.getenv('BUSAN_NEW_ADMIN_SESSION_SECRET', '') or hashlib.sha256(
     f'new-admin:{NEW_ADMIN_PASSWORD}'.encode()
 ).hexdigest()

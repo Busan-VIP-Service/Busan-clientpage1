@@ -40,8 +40,8 @@
         <p class="muted" style="font-size:12px;margin-bottom:0">For a 1:1 chat, open the bot in Telegram and send /start first.</p>
       </section>
       <div class="grid">
-        <section class="card" id="reservationsPanel"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">Loading reservations…</p></div></section>
-        <section class="card" id="invoicePanel">
+        <section class="card"><h2 class="panel-title">Reservations</h2><div class="reservation-list" id="reservations"><p class="muted">No saved reservations yet.</p></div></section>
+        <section class="card">
           <h2 class="panel-title">Create a PayPal payment request</h2>
           <label class="field"><span>Customer name</span><input id="customerName" placeholder="Customer name"></label>
           <label class="field"><span>Customer email <small class="muted">Optional — saved for your records</small></span><input id="customerEmail" type="email" placeholder="customer@example.com"></label>
@@ -75,7 +75,6 @@
     const authBase=isNewAdmin?'/api/admin-new':'/api/admin';
     $('passwordLabel').textContent=isNewAdmin?'8-digit admin PIN':'6-digit admin PIN';
     $('password').maxLength=isNewAdmin?8:6;
-    if(!isNewAdmin){$('reservationsPanel').classList.add('hidden');$('invoicePanel').style.gridColumn='1 / -1'}
     async function api(path,options={}){
       const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','x-admin-request':'1',...(options.headers||{})}});
       const raw=await response.text();let data;

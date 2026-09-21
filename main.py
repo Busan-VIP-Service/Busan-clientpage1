@@ -713,7 +713,7 @@ def admin_paypal_invoicing_status(request: Request):
 
 
 @app.post('/api/admin/invoices')
-def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
+def create_admin_invoice(data: AdminInvoiceRequest, request: Request, background_tasks: BackgroundTasks):
     require_admin(request)
     if data.customerEmail and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', data.customerEmail):
         raise HTTPException(422, 'Enter a valid customer email or leave it blank.')
@@ -795,7 +795,7 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
                 order_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
                 data.courseName.strip(), money(total), 'USD', payer_url, 'created',
             ))
-        send_telegram_alert(
+        background_tasks.add_task(send_telegram_alert,
             f'[결제 요청 생성] {order_id}\n고객: {data.customerName}\n'
             f'코스: {data.courseName}\n할인: {data.discountPercent}% '
             f'(US${money(discount_amount)})\n최종 청구: US${money(total)}\n{payer_url}'
@@ -919,7 +919,7 @@ def create_admin_invoice(data: AdminInvoiceRequest, request: Request):
             invoice_id, data.reservationId, data.customerName.strip(), data.customerEmail.strip(),
             data.courseName.strip(), money(total), 'USD', payer_url, 'unpaid',
         ))
-    send_telegram_alert(
+    background_tasks.add_task(send_telegram_alert,
         f'[인보이스 발행] {invoice_id}\n고객: {data.customerName}\n'
         f'코스: {data.courseName}\n할인: {data.discountPercent}% '
         f'(US${money(discount_amount)})\n최종 청구: US${money(total)}\n{payer_url}'

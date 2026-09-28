@@ -321,6 +321,8 @@
         .course-preview-gallery.single { grid-template-columns: 1fr; }
         .course-preview-gallery figure { position: relative; margin: 0; overflow: hidden; background: #111; }
         .course-preview-gallery img { display: block; width: 100%; height: auto; border: 0; background: #111; object-fit: contain; object-position: center; }
+        .course-preview-gallery .text-free-crop { aspect-ratio: 3 / 4; }
+        .course-preview-gallery .text-free-crop img { position: absolute; top: -265%; left: 0; width: 300%; max-width: none; }
         .course-preview-gallery figcaption { position: absolute; right: 0; bottom: 0; left: 0; padding: 22px 16px 14px; background: linear-gradient(transparent, rgba(11, 13, 11, .88)); color: #f5e9cb; font-size: 12px; font-weight: 600; line-height: 1.45; }
         .venue-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
         .venue-types span { padding: 6px 9px; border: 1px solid #55594b; border-radius: 999px; color: #d6d9d1; background: #292d27; font-size: 11px; }
@@ -554,7 +556,7 @@
                 title: 'Eco Course',
                 venues: ['Private setting', 'Soft lookbook mood'],
                 text: 'A simple private lookbook experience.',
-                images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/mainpic.png', alt: 'Eco Course lookbook styling' }]
+                images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/mainpic.png', alt: 'Eco Course lookbook styling', crop: 'text-free' }]
             },
             '600000 KRW per guest': {
                 title: '20s Choice Room',
@@ -584,6 +586,12 @@
                 item.alt = image.alt;
                 item.loading = 'lazy';
                 item.decoding = 'async';
+                if (image.crop === 'text-free') {
+                    const figure = document.createElement('figure');
+                    figure.className = 'text-free-crop';
+                    figure.append(item);
+                    return figure;
+                }
                 if (!image.caption) return item;
                 const figure = document.createElement('figure');
                 const caption = document.createElement('figcaption');

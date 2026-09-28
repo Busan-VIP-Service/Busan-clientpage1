@@ -233,7 +233,7 @@ class ReservationRequest(BaseModel):
     jobTitle: str = Field(default='', max_length=120)
     visitDate: date
     partySize: str = Field(pattern=r'^(?:[1-4]|5\+)$')
-    budget: Literal['600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
+    budget: Literal['500000 KRW per guest','600000 KRW per guest','800000 KRW per guest','1200000 KRW per guest']
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
 

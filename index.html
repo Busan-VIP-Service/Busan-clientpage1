@@ -319,7 +319,9 @@
         .course-preview h4 { margin: 7px 0 10px; color: #f0e3c3; font-family: Didot, 'Bodoni MT', Georgia, serif; font-size: 20px; font-weight: 500; }
         .course-preview-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px -16px 14px; }
         .course-preview-gallery.single { grid-template-columns: 1fr; }
+        .course-preview-gallery figure { position: relative; margin: 0; overflow: hidden; background: #111; }
         .course-preview-gallery img { display: block; width: 100%; height: auto; border: 0; background: #111; object-fit: contain; object-position: center; }
+        .course-preview-gallery figcaption { position: absolute; right: 0; bottom: 0; left: 0; padding: 22px 16px 14px; background: linear-gradient(transparent, rgba(11, 13, 11, .88)); color: #f5e9cb; font-size: 12px; font-weight: 600; line-height: 1.45; }
         .venue-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
         .venue-types span { padding: 6px 9px; border: 1px solid #55594b; border-radius: 999px; color: #d6d9d1; background: #292d27; font-size: 11px; }
         .course-preview p { margin: 0; color: #aeb5ad; font-size: 12px; line-height: 1.55; }
@@ -428,7 +430,7 @@
                     <div class="options-vertical">
                         <div class="option-vertical-item"><input type="radio" id="b0" name="budget" value="500000 KRW per guest"><label for="b0"><span class="course-price">₩500,000<small>Eco Course</small></span><span class="usd-price">≈ US$360</span><span class="choice-dot" aria-hidden="true"></span></label></div>
                         <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1"><span class="course-price">₩600,000<small>20s Choice Room</small></span><span class="usd-price">≈ US$430</span><span class="choice-dot" aria-hidden="true"></span></label></div>
-                        <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3"><span class="course-price">₩1,200,000<small>High-End VIP</small></span><span class="usd-price">≈ US$860</span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3"><span class="course-price">₩1,200,000<small>Premium VIP Choice Room</small></span><span class="usd-price">≈ US$860</span><span class="choice-dot" aria-hidden="true"></span></label></div>
                     </div>
                 </fieldset>
                 <div class="course-preview" id="coursePreview" hidden aria-live="polite">
@@ -561,10 +563,10 @@
                 images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/main%20pic3.png', alt: '20s Choice Room group in a private Busan lounge' }]
             },
             '1200000 KRW per guest': {
-                title: 'Supermodel VIP Concept',
-                venues: ['Model-profile look', 'Luxury styling', 'Highest-tier presentation'],
-                text: 'The most polished visual tier, focused on model-profile presence, refined styling and a premium VIP atmosphere.',
-                images: [{ src: 'course-concept-1200.png', alt: 'Supermodel VIP experience in a private Busan salon' }]
+                title: 'Premium VIP Choice Room',
+                venues: ['Premium VIP selection', 'Private lounge setting', 'Refined presentation'],
+                text: 'Our highest-tier choice room, curated for a refined private lounge experience and premium presentation.',
+                images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/main%20pic1.webp', alt: 'Premium VIP Choice Room styling', caption: 'Premium VIP Choice Room · refined private lounge experience' }]
             }
         };
 
@@ -582,7 +584,12 @@
                 item.alt = image.alt;
                 item.loading = 'lazy';
                 item.decoding = 'async';
-                return item;
+                if (!image.caption) return item;
+                const figure = document.createElement('figure');
+                const caption = document.createElement('figcaption');
+                caption.textContent = image.caption;
+                figure.append(item, caption);
+                return figure;
             }));
             document.getElementById('coursePreviewVenues').replaceChildren(...preview.venues.map(name => {
                 const item = document.createElement('span');

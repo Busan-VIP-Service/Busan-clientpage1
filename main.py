@@ -52,6 +52,14 @@ def get_guide():
 def get_guide_clean():
     return FileResponse('guide.html')
 
+@app.get('/local-help')
+def get_local_help():
+    return FileResponse(ROOT / 'local-help.html')
+
+@app.get('/local-help.html')
+def get_local_help_html():
+    return FileResponse(ROOT / 'local-help.html')
+
 # Enable email notifications after configuring a sending SMTP account.
 EMAIL_ALERT_ENABLED = os.getenv('EMAIL_ALERT_ENABLED', 'false').lower() in {'1', 'true', 'yes'}
 EMAIL_ALERT_TO = os.getenv('EMAIL_ALERT_TO', 'jwh2394@naver.com')
@@ -589,6 +597,14 @@ def open_whatsapp_chat():
     if not re.fullmatch(r'[1-9][0-9]{7,14}', concierge_whatsapp):
         raise HTTPException(503, 'WhatsApp consultation is not configured yet.')
     message = quote('Hello, I would like a free consultation about a Midnight Sunrise Busan reservation.')
+    return RedirectResponse(f'https://wa.me/{concierge_whatsapp}?text={message}', status_code=302)
+
+@app.get('/api/local-help/whatsapp')
+def open_local_help_whatsapp():
+    concierge_whatsapp = os.getenv('BUSAN_WHATSAPP_NUMBER', '').lstrip('+')
+    if not re.fullmatch(r'[1-9][0-9]{7,14}', concierge_whatsapp):
+        raise HTTPException(503, 'WhatsApp consultation is not configured yet.')
+    message = quote('Hello, I would like to ask about Busan Local Assistance ($100 / 3 Hours).')
     return RedirectResponse(f'https://wa.me/{concierge_whatsapp}?text={message}', status_code=302)
 
 
@@ -1180,7 +1196,7 @@ def home():
 def static_asset(asset: str):
     allowed = {
         # HTML 페이지 및 SEO/설정 파일
-        'index.html', 'admin.html', 'admin-new.html', 'guide.html',
+        'index.html', 'admin.html', 'admin-new.html', 'guide.html', 'local-help.html',
         'robots.txt', 'sitemap.xml', 'google9b519aff934fd839.html',
         
         # JS 스크립트 및 스타일

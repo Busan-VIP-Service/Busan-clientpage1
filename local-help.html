@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Korean communication and local assistance for international visitors in Busan.">
+    <meta name="theme-color" content="#101716">
+    <link rel="canonical" href="https://midnightsunrisebusan.com/local-help">
+    <meta property="og:title" content="Busan Local Assistance | Midnight Sunrise Busan">
+    <meta property="og:description" content="Korean communication and local assistance for international visitors in Busan.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://midnightsunrisebusan.com/local-help">
+    <title>Busan Local Assistance | Midnight Sunrise Busan</title>
+    <style>
+        :root { color-scheme: dark; --ink: #f5f1e7; --muted: #aeb8b3; --line: rgba(218, 196, 139, .24); --gold: #d8bd76; --deep: #101716; --panel: rgba(25, 36, 33, .78); }
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; background: radial-gradient(circle at 85% 0%, #293b35 0, transparent 37%), linear-gradient(150deg, #0a0f0e 0%, var(--deep) 52%, #17231f 100%); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .page { width: min(100%, 620px); min-height: 100vh; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
+        .brand { color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: .2em; line-height: 1.4; }
+        main { margin: auto 0; }
+        .eyebrow { margin: 56px 0 16px; color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+        h1 { max-width: 560px; margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(40px, 10vw, 58px); font-weight: 500; letter-spacing: -.045em; line-height: .98; }
+        .intro { max-width: 470px; margin: 24px 0 30px; color: var(--muted); font-size: 16px; line-height: 1.65; }
+        .offer { display: flex; align-items: baseline; gap: 12px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .price { color: var(--gold); font-size: 27px; font-weight: 700; letter-spacing: -.03em; }
+        .hours { color: var(--muted); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+        .services { display: grid; grid-template-columns: 1fr; gap: 0; margin: 30px 0 32px; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; overflow: hidden; }
+        .service { display: flex; align-items: center; gap: 13px; min-height: 55px; padding: 13px 17px; border-bottom: 1px solid var(--line); color: #e5e7df; font-size: 15px; }
+        .service:last-child { border-bottom: 0; }
+        .dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--gold); box-shadow: 0 0 13px rgba(216, 189, 118, .55); }
+        .cta { display: flex; align-items: center; justify-content: center; min-height: 57px; border: 1px solid #4bbc71; border-radius: 9px; background: #23894c; color: white; text-decoration: none; font-size: 16px; font-weight: 700; box-shadow: 0 12px 30px rgba(0, 0, 0, .26); transition: transform .18s ease, background .18s ease; }
+        .cta:hover, .cta:focus-visible { background: #2a9a57; transform: translateY(-1px); }
+        .note { margin: 15px 0 0; color: #87948e; font-size: 12px; line-height: 1.55; text-align: center; }
+        footer { padding-top: 38px; color: #708078; font-size: 10px; letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+        @media (min-width: 640px) { .page { padding-left: 42px; padding-right: 42px; } .services { grid-template-columns: 1fr 1fr; } .service:nth-last-child(2) { border-bottom: 0; } .service:nth-child(odd) { border-right: 1px solid var(--line); } }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="brand">MIDNIGHT SUNRISE BUSAN</div>
+        <main>
+            <div class="eyebrow">For international visitors</div>
+            <h1>Busan<br>Local Assistance</h1>
+            <p class="intro">Clear, practical support when you need to communicate, coordinate, or get settled in Busan.</p>
+            <div class="offer"><span class="price">$100</span><span class="hours">3 hours</span></div>
+            <section class="services" aria-label="Included support">
+                <div class="service"><span class="dot"></span>Korean communication help</div>
+                <div class="service"><span class="dot"></span>Restaurant recommendations</div>
+                <div class="service"><span class="dot"></span>Local information</div>
+                <div class="service"><span class="dot"></span>Business meeting assistance</div>
+                <div class="service"><span class="dot"></span>After-hours support</div>
+            </section>
+            <a class="cta" href="/api/local-help/whatsapp">Message on WhatsApp</a>
+            <p class="note">Tell us what you need and when. We’ll confirm availability directly.</p>
+        </main>
+        <footer>Independent local assistance · Busan</footer>
+    </div>
+</body>
+</html>

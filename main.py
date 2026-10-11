@@ -14,6 +14,7 @@ import smtplib
 import ssl
 import logging
 import time
+import threading
 import uuid
 import httpx
 import psycopg2
@@ -110,11 +111,14 @@ ADMIN_COOKIE = 'busan_admin_session'
 ADMIN_SESSION_SECONDS = 30 * 24 * 60 * 60
 ADMIN_LOGIN_ATTEMPTS: dict[str, list[float]] = {}
 
-def connect_db():
-    if not DATABASE_URL:
-        raise HTTPException(500, 'DATABASE_URL environment variable is not configured.')
-    db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+_schema_ready = False
+_schema_lock = threading.Lock()
+
+
+def _initialize_schema(db):
     with db.cursor() as cursor:
+        # Serialize migrations across overlapping deploys and worker processes.
+        cursor.execute('SELECT pg_advisory_xact_lock(%s)', (286241358158,))
         cursor.execute('''CREATE TABLE IF NOT EXISTS reservations (
             id SERIAL PRIMARY KEY, name TEXT, company TEXT, job_title TEXT,
             visit_date TEXT, party_size TEXT, vibe TEXT, budget TEXT, guide_type TEXT,
@@ -150,19 +154,32 @@ def connect_db():
             invoice_id TEXT PRIMARY KEY, reservation_id INTEGER, customer_name TEXT,
             customer_email TEXT, course_name TEXT, total_amount TEXT, currency TEXT,
             payer_url TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    db.commit()
-    return db
-
-
-def analytics_db():
-    db = connect_db()
-    with db.cursor() as cursor:
         cursor.execute('''CREATE TABLE IF NOT EXISTS page_views (
             event_id TEXT PRIMARY KEY, day TEXT NOT NULL, source TEXT NOT NULL)''')
         cursor.execute('ALTER TABLE page_views ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMPTZ')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day)')
     db.commit()
+
+
+def connect_db():
+    global _schema_ready
+    if not DATABASE_URL:
+        raise HTTPException(500, 'DATABASE_URL environment variable is not configured.')
+    db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10)
+    try:
+        if not _schema_ready:
+            with _schema_lock:
+                if not _schema_ready:
+                    _initialize_schema(db)
+                    _schema_ready = True
+    except Exception:
+        db.close()
+        raise
     return db
+
+
+def analytics_db():
+    return connect_db()
 
 
 class PageViewRequest(BaseModel):

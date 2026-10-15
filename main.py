@@ -314,7 +314,12 @@ class ReservationRequest(BaseModel):
     jobTitle: str = Field(default='', max_length=120)
     visitDate: date
     partySize: str = Field(pattern=r'^(?:[1-4]|5\+)$')
-    budget: Literal['500000 KRW per guest','600000 KRW per guest','1200000 KRW per guest']
+    # Keep previous prices valid for forms already open before the price update.
+    budget: Literal[
+        '450 USD per guest', '550 USD per guest', '900 USD per guest',
+        '350 USD per guest', '400 USD per guest', '500 USD per guest',
+        '500000 KRW per guest', '600000 KRW per guest', '1200000 KRW per guest',
+    ]
     hotel: str = Field(min_length=1, max_length=160)
     phone: str = Field(min_length=3, max_length=40)
     verificationToken: str = Field(min_length=40, max_length=100)

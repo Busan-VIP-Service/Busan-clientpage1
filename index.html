@@ -180,10 +180,6 @@
         }
         .options-vertical { display: flex; flex-direction: column; gap: 6px; margin-bottom: 5px; }
         .option-vertical-item label { padding: 10px 14px; text-align: left; }
-        .usd-price {
-            display: inline-block; margin-left: 7px; color: #f1d675;
-            font-size: 13px; font-weight: 800; letter-spacing: 0.2px;
-        }
         .modal-cancel { margin-top: 10px; border: 0; background: transparent; color: #999; cursor: pointer; }
         input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%; padding: 11px 12px; margin-top: 4px; margin-bottom: 4px;
@@ -303,10 +299,10 @@
         .content .options-vertical { gap: 8px; margin: 0; }
         .content .option-vertical-item { position: relative; }
         .content .option-vertical-item label { display: flex; align-items: center; gap: 14px; padding: 14px; min-height: 55px; }
-        .course-price { font-size: 16px; font-weight: 600; }
+        .course-price { font-size: 20px; font-weight: 600; }
         .course-price small { display: block; margin-top: 4px; font-size: 10px; color: #b8aa86; font-weight: 400; }
-        .content .usd-price { margin-left: auto; font-size: 12px; font-weight: 400; color: #a4ada4; white-space: nowrap; }
-        .choice-dot { width: 15px; height: 15px; border: 1px solid #657064; border-radius: 50%; flex-shrink: 0; }
+        .course-price .krw-price { display: block; margin-top: 6px; font-size: 12px; font-weight: 400; color: #a4ada4; }
+        .choice-dot { width: 15px; height: 15px; margin-left: auto; border: 1px solid #657064; border-radius: 50%; flex-shrink: 0; }
         .content input[type="radio"]:checked + label { border-color: #c1af82; background: #2b2d24; color: #f3e5c3; }
         .content input[type="radio"]:checked + label .choice-dot { border: 4px solid #c1af82; background: #25291f; }
         .content input[type="radio"] { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }
@@ -426,11 +422,11 @@
                         <div class="option-item"><input type="radio" id="p5" name="partySize" value="5+"><label for="p5">5+</label></div>
                     </div></fieldset>
                 </div>
-                <fieldset class="course-field"><legend class="section-label">VIP Course <span class="field-hint">KRW / guest</span></legend>
+                <fieldset class="course-field"><legend class="section-label">VIP Course <span class="field-hint">USD / guest</span></legend>
                     <div class="options-vertical">
-                        <div class="option-vertical-item"><input type="radio" id="b0" name="budget" value="500000 KRW per guest"><label for="b0"><span class="course-price">₩500,000<small>Eco Course</small></span><span class="usd-price">≈ US$360</span><span class="choice-dot" aria-hidden="true"></span></label></div>
-                        <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="600000 KRW per guest"><label for="b1"><span class="course-price">₩600,000<small>20s Choice Room</small></span><span class="usd-price">≈ US$430</span><span class="choice-dot" aria-hidden="true"></span></label></div>
-                        <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="1200000 KRW per guest"><label for="b3"><span class="course-price">₩1,200,000<small>Premium VIP Choice Room</small></span><span class="usd-price">≈ US$860</span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b0" name="budget" value="450 USD per guest"><label for="b0"><span class="course-price">US$450<small>Eco Course</small><small class="krw-price">KRW payment: ₩600,000</small></span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b1" name="budget" value="550 USD per guest"><label for="b1"><span class="course-price">US$550<small>20s Choice Room</small><small class="krw-price">KRW payment: ₩700,000</small></span><span class="choice-dot" aria-hidden="true"></span></label></div>
+                        <div class="option-vertical-item"><input type="radio" id="b3" name="budget" value="900 USD per guest"><label for="b3"><span class="course-price">US$900<small>Premium VIP Choice Room</small><small class="krw-price">KRW payment: ₩1,200,000</small></span><span class="choice-dot" aria-hidden="true"></span></label></div>
                     </div>
                 </fieldset>
                 <div class="course-preview" id="coursePreview" hidden aria-live="polite">
@@ -441,7 +437,7 @@
                     <p id="coursePreviewText"></p>
                     <small>Reference images show the styling direction only. Actual host appearance, outfit, venue and availability may vary and are confirmed after consultation.</small>
                 </div>
-                <p class="service-note">Course prices exclude interpreter fees. <span>Professional English interpretation is charged separately.</span></p>
+                <p class="service-note">Prices are per guest. Pay in USD or at the listed KRW price. <span>Professional English interpretation is charged separately.</span></p>
             </section>
 
             <section class="form-section" aria-labelledby="detailsHeading">
@@ -550,19 +546,19 @@
         });
 
         const coursePreviews = {
-            '500000 KRW per guest': {
+            '450 USD per guest': {
                 title: 'Eco Course',
                 venues: ['Private setting', 'Soft lookbook mood'],
                 text: 'A simple private lookbook experience.',
                 images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/eco%20image.jpg', alt: 'Eco Course lookbook styling' }]
             },
-            '600000 KRW per guest': {
+            '550 USD per guest': {
                 title: '20s Choice Room',
                 venues: ['20s choice room', 'Private lounge setting', 'Group choice experience'],
                 text: 'A private lounge choice room featuring a curated group presentation and a relaxed social atmosphere.',
                 images: [{ src: 'https://busan-vip-service.github.io/Busan-clientpage1/main%20pic3.png', alt: '20s Choice Room group in a private Busan lounge' }]
             },
-            '1200000 KRW per guest': {
+            '900 USD per guest': {
                 title: 'Premium VIP Choice Room',
                 venues: ['Premium VIP selection', 'Private lounge setting', 'Refined presentation'],
                 text: 'Our highest-tier choice room, curated for a refined private lounge experience and premium presentation.',

@@ -206,42 +206,49 @@ def record_page_view(data: PageViewRequest, request: Request):
     return Response(status_code=204)
 
 
-def real_analytics_data():
+def real_analytics_data(selected_day: date | None = None):
     today = datetime.now(timezone(timedelta(hours=9))).date()
-    start = (today - timedelta(days=29)).isoformat()
+    selected_day = selected_day or today
+    if selected_day > today:
+        raise HTTPException(400, '미래 날짜는 조회할 수 없습니다.')
+    end = selected_day.isoformat()
+    start = (selected_day - timedelta(days=29)).isoformat()
     with closing(analytics_db()) as db, db.cursor() as cursor:
         cursor.execute('''SELECT COUNT(*) AS total,
             COALESCE(SUM(CASE WHEN day = %s THEN 1 ELSE 0 END), 0) AS today,
-            COALESCE(SUM(CASE WHEN day >= %s THEN 1 ELSE 0 END), 0) AS week, MIN(day) AS started
-            FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat()))
+            COALESCE(SUM(CASE WHEN day >= %s THEN 1 ELSE 0 END), 0) AS week,
+            COALESCE(SUM(CASE WHEN day = %s AND viewed_at IS NULL THEN 1 ELSE 0 END), 0) AS unknown_today,
+            MIN(day) AS started
+            FROM page_views''', (today.isoformat(), (today - timedelta(days=6)).isoformat(), today.isoformat()))
         totals = dict(cursor.fetchone())
 
-        cursor.execute('SELECT day, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY day', (start,))
+        cursor.execute('SELECT day, COUNT(*) AS views FROM page_views WHERE day >= %s AND day <= %s GROUP BY day', (start, end))
         counts = {r['day']: r['views'] for r in cursor.fetchall()}
 
-        cursor.execute('SELECT source, COUNT(*) AS views FROM page_views WHERE day >= %s GROUP BY source', (start,))
+        cursor.execute('SELECT source, COUNT(*) AS views FROM page_views WHERE day >= %s AND day <= %s GROUP BY source', (start, end))
         sources = {r['source']: r['views'] for r in cursor.fetchall()}
 
         cursor.execute('''SELECT EXTRACT(HOUR FROM viewed_at AT TIME ZONE 'Asia/Seoul')::int AS hour,
             COUNT(*) AS views FROM page_views
-            WHERE day = %s AND viewed_at IS NOT NULL GROUP BY hour ORDER BY hour''', (today.isoformat(),))
+            WHERE day = %s AND viewed_at IS NOT NULL GROUP BY hour ORDER BY hour''', (end,))
         hours = {int(r['hour']): r['views'] for r in cursor.fetchall()}
         cursor.execute('SELECT COUNT(*) AS views FROM page_views WHERE day = %s AND viewed_at IS NULL',
-                       (today.isoformat(),))
-        unknown_today = cursor.fetchone()['views']
+                       (end,))
+        unknown_hours = cursor.fetchone()['views']
 
-    return {**totals, 'days': [{'day': (today - timedelta(days=i)).isoformat(),
-            'views': counts.get((today - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
+    return {**totals, 'days': [{'day': (selected_day - timedelta(days=i)).isoformat(),
+            'views': counts.get((selected_day - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
             'sources': sources,
             'hours': [{'hour': hour, 'views': hours.get(hour, 0)} for hour in range(24)],
-            'unknown_today': unknown_today}
+            'unknown_hours': unknown_hours, 'selected_total': sum(hours.values()) + unknown_hours,
+            'selected_day': end, 'today_date': today.isoformat(), 'range_start': start, 'range_end': end}
 
 
 @app.get('/api/admin/analytics')
-def admin_analytics(request: Request, response: Response):
+def admin_analytics(request: Request, response: Response, day: date | None = None):
     require_admin(request)
     response.headers['Cache-Control'] = 'no-store'
-    return {**real_analytics_data(), 'display_mode': 'actual'}
+    return {**(real_analytics_data(day)), 'display_mode': 'actual'}
 
 
 def issue_session(secret: str) -> str:

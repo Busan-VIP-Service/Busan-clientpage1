@@ -225,25 +225,35 @@ def real_analytics_data(selected_day: date | None = None, source: str = 'all'):
             (today.isoformat(), (today - timedelta(days=6)).isoformat(), today.isoformat()) + source_params)
         totals = dict(cursor.fetchone())
 
-        cursor.execute(f'SELECT day, COUNT(*) AS views FROM page_views WHERE day >= %s AND day <= %s{source_filter} GROUP BY day', (start, end) + source_params)
-        counts = {r['day']: r['views'] for r in cursor.fetchall()}
+        cursor.execute(f'''SELECT day, COUNT(*) AS views,
+            SUM(CASE WHEN source = 'qr' THEN 1 ELSE 0 END) AS qr_views
+            FROM page_views WHERE day >= %s AND day <= %s{source_filter} GROUP BY day''', (start, end) + source_params)
+        counts = {r['day']: r for r in cursor.fetchall()}
 
         cursor.execute(f'SELECT source, COUNT(*) AS views FROM page_views WHERE day >= %s AND day <= %s{source_filter} GROUP BY source', (start, end) + source_params)
         sources = {r['source']: r['views'] for r in cursor.fetchall()}
 
         cursor.execute(f'''SELECT EXTRACT(HOUR FROM viewed_at AT TIME ZONE 'Asia/Seoul')::int AS hour,
-            COUNT(*) AS views FROM page_views
+            COUNT(*) AS views, SUM(CASE WHEN source = 'qr' THEN 1 ELSE 0 END) AS qr_views FROM page_views
             WHERE day = %s AND viewed_at IS NOT NULL{source_filter} GROUP BY hour ORDER BY hour''', (end,) + source_params)
-        hours = {int(r['hour']): r['views'] for r in cursor.fetchall()}
-        cursor.execute(f'SELECT COUNT(*) AS views FROM page_views WHERE day = %s AND viewed_at IS NULL{source_filter}',
+        hours = {int(r['hour']): r for r in cursor.fetchall()}
+        cursor.execute(f'''SELECT COUNT(*) AS views,
+                       COALESCE(SUM(CASE WHEN source = 'qr' THEN 1 ELSE 0 END), 0) AS qr_views
+                       FROM page_views WHERE day = %s AND viewed_at IS NULL{source_filter}''',
                        (end,) + source_params)
-        unknown_hours = cursor.fetchone()['views']
+        unknown = cursor.fetchone()
+        unknown_hours = unknown['views']
+        unknown_qr_hours = unknown['qr_views']
 
     return {**totals, 'days': [{'day': (selected_day - timedelta(days=i)).isoformat(),
-            'views': counts.get((selected_day - timedelta(days=i)).isoformat(), 0)} for i in range(30)],
+            'views': counts.get((selected_day - timedelta(days=i)).isoformat(), {}).get('views', 0),
+            'qr_views': counts.get((selected_day - timedelta(days=i)).isoformat(), {}).get('qr_views', 0)} for i in range(30)],
             'sources': sources, 'source_filter': source,
-            'hours': [{'hour': hour, 'views': hours.get(hour, 0)} for hour in range(24)],
-            'unknown_hours': unknown_hours, 'selected_total': sum(hours.values()) + unknown_hours,
+            'hours': [{'hour': hour, 'views': hours.get(hour, {}).get('views', 0),
+                       'qr_views': hours.get(hour, {}).get('qr_views', 0)} for hour in range(24)],
+            'unknown_hours': unknown_hours, 'selected_total': sum(h['views'] for h in hours.values()) + unknown_hours,
+            'unknown_qr_hours': unknown_qr_hours,
+            'selected_qr_total': sum(h['qr_views'] for h in hours.values()) + unknown_qr_hours,
             'selected_day': end, 'today_date': today.isoformat(), 'range_start': start, 'range_end': end}
 
 

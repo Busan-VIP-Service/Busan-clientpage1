@@ -12,6 +12,7 @@
     @media(max-width:760px){.shell{padding:18px 12px 80px}.grid{grid-template-columns:1fr}.card{padding:16px}.reservation-list{max-height:270px}.amounts{grid-template-columns:1fr}.top h1{font-size:25px}.top{margin-bottom:18px}#invoiceButton{position:sticky;bottom:10px;z-index:5;box-shadow:0 10px 30px #0009}.actions{flex-direction:column}}
     button{cursor:pointer}button:disabled{cursor:default;opacity:.45}.analytics-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 26px}.analytics-totals .card{padding:16px;box-shadow:none}.analytics-totals strong{display:block;font-size:28px;margin-top:8px;color:#eed486}.analytics-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:8px}.analytics-toolbar .field{margin:0 8px 0 0}.analytics-toolbar input{color-scheme:dark;min-height:40px;padding:8px 10px}.analytics-toolbar .ghost{min-height:40px}.ghost[aria-pressed="true"]{color:#f0cf78;border-color:#b89b52;background:#302e24}.analytics-section{margin-top:28px;padding-top:22px;border-top:1px solid #343a35}.analytics-heading{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:4px}.analytics-heading h3{margin:0;font-size:16px}.analytics-heading strong{color:#eed486;font-size:23px}.chart-scroll{overflow-x:auto;margin-top:16px;border:1px solid #343a35;border-radius:10px;background:#151815;overscroll-behavior-x:contain}.chart-svg{display:block;width:100%;min-width:660px;height:auto}.chart-svg text{fill:#aab2a9;font-size:11px;font-family:inherit}.chart-svg .bar{fill:#ad9252}.chart-svg .chart-item{outline:none}.chart-svg .chart-item:hover .bar,.chart-svg .chart-item:focus .bar,.chart-svg .selected .bar{fill:#f0cf78;stroke:#fff0af;stroke-width:1}.chart-note{font-size:12px;margin:10px 0;min-height:18px}.analytics-warning{padding:12px;border-radius:7px;background:#302b1c;color:#e8cf90;font-size:13px;line-height:1.6}.analytics-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}.analytics-table th,.analytics-table td{padding:9px;border-bottom:1px solid #343a35}.analytics-table th:last-child,.analytics-table td:last-child{text-align:right}.date-link{padding:3px 0;border:0;background:transparent;color:#f0cf78;text-decoration:underline;text-underline-offset:3px}.analytics-section details{margin-top:12px}.analytics-section summary{cursor:pointer;color:#afb8ac;font-size:13px}.analytics-section details>div{max-height:300px;overflow:auto;margin-top:10px}.analytics-range{font-size:12px;margin:6px 0}.analytics-empty{color:#bbc4b8}.analytics-toolbar .date-nav{display:flex;gap:8px}
     @media(max-width:480px){.analytics-totals{gap:6px}.analytics-totals .card{padding:12px 8px}.analytics-totals .muted{font-size:12px}.analytics-totals strong{font-size:24px}.analytics-toolbar{gap:8px}.analytics-toolbar .field{flex:1 1 100%;margin:0}.analytics-toolbar input{width:100%}.analytics-heading strong{font-size:21px}}
+    .chart-legend{display:flex;gap:18px;align-items:center;margin:12px 0;font-size:12px;color:#b6bfb4}.chart-legend span{display:flex;gap:6px;align-items:center}.chart-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;background:#ad9252}.chart-legend .qr-key{background:#68c5aa}.chart-svg .qr-bar{fill:#68c5aa}.chart-svg .qr-value{fill:#92ddc7}.chart-svg .chart-item:hover .qr-bar,.chart-svg .chart-item:focus .qr-bar,.chart-svg .selected .qr-bar{fill:#9cebd3;stroke:#c6ffee;stroke-width:1}.analytics-table td:nth-child(2),.analytics-table th:nth-child(2){text-align:right}
   </style>
 </head>
 <body>
@@ -29,11 +30,6 @@
         <div class="top"><h2 class="panel-title">페이지 조회수</h2><button class="ghost" id="refreshAnalytics">새로고침</button></div>
         <div id="analyticsStatus" class="muted" role="status">집계를 불러오는 중…</div>
         <div id="analyticsContent" hidden>
-          <div class="analytics-toolbar" role="group" aria-label="조회수 유입 구분" style="margin-top:18px">
-            <button class="ghost" id="allAnalytics" type="button" aria-pressed="true">전체 조회</button>
-            <button class="ghost" id="qrAnalytics" type="button" aria-pressed="false">QR 조회만</button>
-          </div>
-          <p class="muted chart-note" id="analyticsFilterNote">모든 유입의 조회수를 표시합니다.</p>
           <div class="analytics-totals" id="viewTotals"></div>
           <div class="analytics-toolbar" id="analyticsToolbar">
             <label class="field"><span>조회 날짜 · 한국 시간</span><input id="analyticsDay" type="date" required></label>
@@ -45,18 +41,20 @@
             <p class="muted analytics-range" id="selectedDayLabel"></p>
             <p id="hourlySummary" class="muted chart-note"></p>
             <p id="unknownHoursNote" class="analytics-warning" hidden></p>
+            <div class="chart-legend"><span><i></i>전체 조회 (QR 포함)</span><span><i class="qr-key"></i>QR 조회</span></div>
             <div class="chart-scroll" id="hourlyChart"></div>
             <p class="muted chart-note" id="hourlyChartHint" aria-live="polite">막대를 누르면 해당 시간의 조회수를 볼 수 있습니다.</p>
-            <details><summary>시간대별 수치 보기</summary><div><table class="analytics-table"><thead><tr><th scope="col">시간 (한국 시간)</th><th scope="col">조회수</th></tr></thead><tbody id="viewHours"></tbody></table></div></details>
+            <details><summary>시간대별 수치 보기</summary><div><table class="analytics-table"><thead><tr><th scope="col">시간 (한국 시간)</th><th scope="col">전체</th><th scope="col">QR</th></tr></thead><tbody id="viewHours"></tbody></table></div></details>
           </section>
           <section class="analytics-section" aria-labelledby="dailyTitle">
             <div class="analytics-heading"><h3 id="dailyTitle">날짜별 조회수 · 30일</h3><strong id="periodViews"></strong></div>
             <p class="muted analytics-range" id="analyticsRange"></p>
+            <div class="chart-legend"><span><i></i>전체 조회 (QR 포함)</span><span><i class="qr-key"></i>QR 조회</span></div>
             <div class="chart-scroll" id="dailyChart"></div>
             <p class="muted chart-note">날짜 막대를 누르면 그날의 시간대별 조회수가 열립니다. 모바일에서는 그래프를 좌우로 밀어 볼 수 있습니다.</p>
-            <details><summary>날짜별 수치 보기</summary><div><table class="analytics-table"><thead><tr><th scope="col">날짜 (한국 시간)</th><th scope="col">조회수</th></tr></thead><tbody id="viewDays"></tbody></table></div></details>
+            <details><summary>날짜별 수치 보기</summary><div><table class="analytics-table"><thead><tr><th scope="col">날짜 (한국 시간)</th><th scope="col">전체</th><th scope="col">QR</th></tr></thead><tbody id="viewDays"></tbody></table></div></details>
           </section>
-          <section class="analytics-section" id="viewSourcesSection"><h3 style="font-size:16px;margin-top:0">표시된 30일 유입</h3><div id="viewSources" class="muted"></div></section>
+          <section class="analytics-section"><h3 style="font-size:16px;margin-top:0">표시된 30일 유입</h3><div id="viewSources" class="muted"></div></section>
         </div>
         <p class="muted" style="font-size:12px">조회수는 페이지가 열린 횟수이며 새로고침도 포함됩니다. 방문자 수와는 다릅니다. 집계 설치 이후부터 기록하며 로그인한 관리자의 조회는 제외합니다. 직접 방문에는 구분 표시 없는 QR·앱 유입도 포함됩니다.</p>
         <p class="muted" style="font-size:12px">QR을 별도로 집계하려면 이 주소로 QR을 만드세요: <a style="color:#f0cf78;word-break:break-all" href="https://midnightsunrisebusan.com/?utm_source=qr">https://midnightsunrisebusan.com/?utm_source=qr</a></p>
@@ -118,16 +116,18 @@
       const step=Math.max(1,Math.ceil(max/4)),ceiling=step*4,slot=(width-left-right)/items.length;
       const grid=Array.from({length:5},(_,i)=>{const value=step*i,y=height-bottom-value/ceiling*plotHeight;return `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" stroke="#30372f"/><text x="${left-10}" y="${y+4}" text-anchor="end">${formatViews(value)}</text>`}).join('');
       const bars=items.map((item,i)=>{
-        const x=left+slot*i+slot*.17,barWidth=slot*.66,barHeight=item.views/ceiling*plotHeight,y=height-bottom-barHeight;
+        const x=left+slot*i+slot*.12,barWidth=slot*.32,barHeight=item.views/ceiling*plotHeight,y=height-bottom-barHeight;
+        const qrViews=Number(item.qr_views)||0,qrX=left+slot*i+slot*.53,qrHeight=qrViews/ceiling*plotHeight,qrY=height-bottom-qrHeight;
         const caption=selectable?item.day.slice(5).replace('-','/'):String(item.hour).padStart(2,'0');
-        const description=selectable?`${item.day} · ${formatViews(item.views)}회 · 시간대별 조회 보기`:`${caption}:00–${caption}:59 · ${formatViews(item.views)}회`;
+        const counts=`전체 ${formatViews(item.views)}회 · QR ${formatViews(qrViews)}회`;
+        const description=selectable?`${item.day} · ${counts} · 시간대별 조회 보기`:`${caption}:00–${caption}:59 · ${counts}`;
         const enabled=!selectable||!analyticsData.started||item.day>=analyticsData.started;
-        return `<g class="chart-item${selectable&&item.day===analyticsData.selected_day?' selected':''}" ${enabled?'tabindex="0" role="button"':''} data-index="${i}" aria-label="${escapeHtml(description)}"><title>${escapeHtml(description)}</title><rect x="${left+slot*i}" y="${top-20}" width="${slot}" height="${plotHeight+bottom+20}" fill="transparent"/><rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="3"/>${item.views?`<text x="${x+barWidth/2}" y="${y-8}" text-anchor="middle">${formatViews(item.views)}</text>`:''}${!selectable||i%3===0||i===items.length-1?`<text x="${x+barWidth/2}" y="${height-17}" text-anchor="middle">${caption}</text>`:''}</g>`;
+        return `<g class="chart-item${selectable&&item.day===analyticsData.selected_day?' selected':''}" ${enabled?'tabindex="0" role="button"':''} data-index="${i}" aria-label="${escapeHtml(description)}"><title>${escapeHtml(description)}</title><rect x="${left+slot*i}" y="${top-20}" width="${slot}" height="${plotHeight+bottom+20}" fill="transparent"/><rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2"/><rect class="qr-bar" x="${qrX}" y="${qrY}" width="${barWidth}" height="${qrHeight}" rx="2"/>${item.views?`<text x="${x+barWidth/2}" y="${y-8}" text-anchor="middle">${formatViews(item.views)}</text>`:''}${qrViews?`<text class="qr-value" x="${qrX+barWidth/2}" y="${qrY-8-(Math.abs(qrY-y)<14?14:0)}" text-anchor="middle">${formatViews(qrViews)}</text>`:''}${!selectable||i%3===0||i===items.length-1?`<text x="${left+slot*(i+.5)}" y="${height-17}" text-anchor="middle">${caption}</text>`:''}</g>`;
       }).join('');
       $(id).innerHTML=`<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="group" aria-label="${escapeHtml(label)}">${grid}${bars}</svg>`;
       $(id).querySelectorAll('.chart-item[role="button"]').forEach(bar=>{
         const item=items[Number(bar.dataset.index)];
-        const describe=()=>{if(!selectable)$('hourlyChartHint').textContent=`${String(item.hour).padStart(2,'0')}:00–${String(item.hour).padStart(2,'0')}:59 · ${formatViews(item.views)}회`};
+        const describe=()=>{if(!selectable)$('hourlyChartHint').textContent=`${String(item.hour).padStart(2,'0')}:00–${String(item.hour).padStart(2,'0')}:59 · 전체 ${formatViews(item.views)}회 · QR ${formatViews(item.qr_views||0)}회`};
         bar.addEventListener('focus',describe);bar.addEventListener('mouseenter',describe);
         bar.onclick=()=>selectable?chooseAnalyticsDay(item.day):describe();
         bar.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();bar.onclick()}};
@@ -136,8 +136,6 @@
     function updateAnalyticsControls(){
       if(!analyticsData)return;
       const data=analyticsData,day=data.selected_day,yesterday=shiftDay(data.today_date,-1);
-      $('allAnalytics').setAttribute('aria-pressed',String(data.source_filter!=='qr'));
-      $('qrAnalytics').setAttribute('aria-pressed',String(data.source_filter==='qr'));
       $('analyticsDay').value=day;$('analyticsDay').max=data.today_date;$('analyticsDay').min=data.started||'';
       $('previousAnalyticsDay').disabled=!!data.started&&day<=data.started;
       $('nextAnalyticsDay').disabled=day>=data.today_date;
@@ -150,7 +148,7 @@
       if(analyticsData&&(day>analyticsData.today_date||(analyticsData.started&&day<analyticsData.started))){updateAnalyticsControls();return}
       loadAnalytics(day);
     }
-    async function loadAnalytics(day=analyticsData?.selected_day,source=analyticsData?.source_filter||'all'){
+    async function loadAnalytics(day=analyticsData?.selected_day){
       if(analyticsLoading)return;
       analyticsLoading=true;
       $('refreshAnalytics').disabled=true;
@@ -158,15 +156,9 @@
       $('analyticsContent').setAttribute('aria-busy','true');
       $('analyticsStatus').textContent='집계를 불러오는 중…';
       try {
-        const params=new URLSearchParams({source});if(day)params.set('day',day);
-        const data=await api('/api/admin/analytics?'+params.toString());
+        const data=await api('/api/admin/analytics'+(day?'?day='+encodeURIComponent(day):''));
         analyticsData=data;
-        const qrOnly=data.source_filter==='qr',prefix=qrOnly?'QR ':'';
-        $('analyticsFilterNote').textContent=qrOnly?'QR 유입으로 기록된 조회수만 표시합니다. 아래 합계와 그래프 모두 QR 기준입니다.':'모든 유입의 조회수를 표시합니다.';
-        $('hourlyTitle').textContent=prefix+'시간대별 조회수';
-        $('dailyTitle').textContent=prefix+'날짜별 조회수 · 30일';
-        $('viewSourcesSection').hidden=qrOnly;
-        $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${prefix}${label}</span><strong>${formatViews(n)}</strong></div>`).join('');
+        $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${label}</span><strong>${formatViews(n)}</strong></div>`).join('');
         $('viewSources').textContent=[['qr','QR'],['direct','직접 / 출처 없음'],['search','검색'],['referral','외부 링크']].map(([key,label])=>`${label}: ${formatViews(data.sources[key]||0)}`).join(' · ');
         $('selectedViews').textContent=formatViews(data.selected_total)+'회';
         $('selectedDayLabel').textContent=data.selected_day+' · 한국 시간 00:00–23:59'+(data.selected_day===data.today_date?' · 오늘 진행 중':'');
@@ -174,14 +166,14 @@
         $('hourlySummary').textContent=peak?`가장 많이 본 시간: ${data.hours.filter(h=>h.views===peak).map(h=>String(h.hour).padStart(2,'0')+'시').join(', ')} · 시간당 ${formatViews(peak)}회`:data.unknown_hours?'이 날짜에는 시간대가 기록된 조회가 없습니다.':'이 날짜에 기록된 조회수가 없습니다.';
         $('unknownHoursNote').hidden=!data.unknown_hours;
         $('unknownHoursNote').textContent=`시간 기록이 없는 과거 조회 ${formatViews(data.unknown_hours)}회가 있습니다. 날짜별 합계에는 포함되며, 시간대별 그래프에는 배분하지 않았습니다.`;
-        $('viewHours').innerHTML=data.hours.map(h=>`<tr><td>${String(h.hour).padStart(2,'0')}:00–${String(h.hour).padStart(2,'0')}:59</td><td>${formatViews(h.views)}</td></tr>`).join('')+(data.unknown_hours?`<tr><td>시간 기록 없음</td><td>${formatViews(data.unknown_hours)}</td></tr>`:'');
-        $('viewDays').innerHTML=data.days.map(d=>`<tr><td>${!data.started||d.day>=data.started?`<button type="button" class="date-link" data-day="${escapeHtml(d.day)}">${escapeHtml(d.day)}</button>`:escapeHtml(d.day)}</td><td>${formatViews(d.views)}</td></tr>`).join('');
+        $('viewHours').innerHTML=data.hours.map(h=>`<tr><td>${String(h.hour).padStart(2,'0')}:00–${String(h.hour).padStart(2,'0')}:59</td><td>${formatViews(h.views)}</td><td>${formatViews(h.qr_views||0)}</td></tr>`).join('')+(data.unknown_hours?`<tr><td>시간 기록 없음</td><td>${formatViews(data.unknown_hours)}</td><td>${formatViews(data.unknown_qr_hours||0)}</td></tr>`:'');
+        $('viewDays').innerHTML=data.days.map(d=>`<tr><td>${!data.started||d.day>=data.started?`<button type="button" class="date-link" data-day="${escapeHtml(d.day)}">${escapeHtml(d.day)}</button>`:escapeHtml(d.day)}</td><td>${formatViews(d.views)}</td><td>${formatViews(d.qr_views||0)}</td></tr>`).join('');
         $('viewDays').querySelectorAll('[data-day]').forEach(button=>button.onclick=()=>chooseAnalyticsDay(button.dataset.day));
         $('analyticsRange').textContent=`${data.range_start} ~ ${data.range_end} · 선택 날짜까지 30일 · 한국 시간`;
         $('periodViews').textContent=formatViews(data.days.reduce((sum,d)=>sum+d.views,0))+'회';
         $('hourlyChartHint').textContent='막대를 누르면 해당 시간의 조회수를 볼 수 있습니다.';
-        drawAnalyticsChart('hourlyChart',data.hours,`${data.selected_day} ${prefix}시간대별 조회수`);
-        drawAnalyticsChart('dailyChart',[...data.days].reverse(),prefix+'날짜별 조회수, 날짜를 선택하면 시간대별 조회 표시',true);
+        drawAnalyticsChart('hourlyChart',data.hours,`${data.selected_day} 시간대별 조회수`);
+        drawAnalyticsChart('dailyChart',[...data.days].reverse(),'날짜별 조회수, 날짜를 선택하면 시간대별 조회 표시',true);
         updateAnalyticsControls();
         $('analyticsContent').hidden=false;
         $('analyticsStatus').textContent=data.started ? `첫 기록: ${data.started} · 방금 업데이트됨` : '아직 기록된 조회가 없습니다.';
@@ -189,8 +181,6 @@
       finally { analyticsLoading=false;$('refreshAnalytics').disabled=false;$('analyticsContent').inert=false;$('analyticsContent').setAttribute('aria-busy','false'); }
     }
     $('refreshAnalytics').onclick=()=>loadAnalytics();
-    $('allAnalytics').onclick=()=>loadAnalytics(analyticsData?.selected_day,'all');
-    $('qrAnalytics').onclick=()=>loadAnalytics(analyticsData?.selected_day,'qr');
     $('analyticsDay').onchange=()=>{if($('analyticsDay').reportValidity())chooseAnalyticsDay($('analyticsDay').value)};
     $('previousAnalyticsDay').onclick=()=>chooseAnalyticsDay(shiftDay(analyticsData.selected_day,-1));
     $('nextAnalyticsDay').onclick=()=>chooseAnalyticsDay(shiftDay(analyticsData.selected_day,1));

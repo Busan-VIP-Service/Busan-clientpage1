@@ -126,6 +126,46 @@ class AdminTests(unittest.TestCase):
         self.assertIsNone(empty['started'])
         self.assertTrue(all(d['views'] == 0 for d in empty['days']))
 
+    def test_qr_filter_isolates_totals_hours_and_history(self):
+        self.assertEqual(self.client.get('/api/admin/analytics?source=qr').status_code, 401)
+        self.login()
+        db = self.analytics_fixture()
+        with patch.object(main, 'analytics_db', return_value=db), patch.object(main, 'datetime') as clock:
+            clock.now.return_value = datetime(2026, 10, 17, tzinfo=timezone(timedelta(hours=9)))
+            qr_response = self.client.get('/api/admin/analytics?day=2026-10-16&source=qr')
+            today = self.client.get('/api/admin/analytics?source=qr').json()
+            old = self.client.get('/api/admin/analytics?day=2026-09-01&source=qr').json()
+            all_views = self.client.get('/api/admin/analytics?day=2026-10-16&source=all').json()
+        self.assertEqual(qr_response.status_code, 200)
+        qr = qr_response.json()
+        self.assertEqual(qr['source_filter'], 'qr')
+        self.assertEqual((qr['today'], qr['week'], qr['total']), (0, 1, 1))
+        self.assertEqual((qr['selected_total'], qr['unknown_hours']), (1, 0))
+        self.assertEqual(qr['hours'][0]['views'], 1)
+        self.assertEqual(qr['hours'][23]['views'], 0)
+        self.assertEqual(sum(d['views'] for d in qr['days']), 1)
+        self.assertEqual(qr['sources'], {'qr': 1})
+        self.assertEqual(qr['started'], '2026-09-01')
+        self.assertEqual(today['selected_total'], 0)
+        self.assertEqual(old['selected_total'], 0)
+        self.assertEqual((all_views['source_filter'], all_views['total'], all_views['selected_total']), ('all', 6, 4))
+
+    def test_qr_filter_keeps_legacy_qr_counts_and_validates_source(self):
+        self.login()
+        db = self.analytics_fixture()
+        cursor = db.cursor.return_value.__enter__.return_value
+        cursor.execute('INSERT INTO page_views VALUES (%s, %s, %s)', ('2026-09-01', 'qr', None))
+        with patch.object(main, 'analytics_db', return_value=db), patch.object(main, 'datetime') as clock:
+            clock.now.return_value = datetime(2026, 10, 17, tzinfo=timezone(timedelta(hours=9)))
+            data = self.client.get('/api/admin/analytics?day=2026-09-01&source=qr').json()
+        self.assertEqual((data['selected_total'], data['unknown_hours'], data['total']), (1, 1, 2))
+        self.assertTrue(all(h['views'] == 0 for h in data['hours']))
+        self.assertEqual(data['days'][0]['views'], 1)
+        self.assertEqual(data['sources'], {'qr': 1})
+        with patch.object(main, 'analytics_db') as connect:
+            self.assertEqual(self.client.get('/api/admin/analytics?source=invalid').status_code, 422)
+            connect.assert_not_called()
+
     def test_reservations(self):
         db = MagicMock()
         db.cursor.return_value.__enter__.return_value.fetchall.return_value = [{'id': 7, 'name': 'Test guest'}]

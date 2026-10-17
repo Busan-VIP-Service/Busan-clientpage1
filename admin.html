@@ -29,6 +29,11 @@
         <div class="top"><h2 class="panel-title">페이지 조회수</h2><button class="ghost" id="refreshAnalytics">새로고침</button></div>
         <div id="analyticsStatus" class="muted" role="status">집계를 불러오는 중…</div>
         <div id="analyticsContent" hidden>
+          <div class="analytics-toolbar" role="group" aria-label="조회수 유입 구분" style="margin-top:18px">
+            <button class="ghost" id="allAnalytics" type="button" aria-pressed="true">전체 조회</button>
+            <button class="ghost" id="qrAnalytics" type="button" aria-pressed="false">QR 조회만</button>
+          </div>
+          <p class="muted chart-note" id="analyticsFilterNote">모든 유입의 조회수를 표시합니다.</p>
           <div class="analytics-totals" id="viewTotals"></div>
           <div class="analytics-toolbar" id="analyticsToolbar">
             <label class="field"><span>조회 날짜 · 한국 시간</span><input id="analyticsDay" type="date" required></label>
@@ -51,7 +56,7 @@
             <p class="muted chart-note">날짜 막대를 누르면 그날의 시간대별 조회수가 열립니다. 모바일에서는 그래프를 좌우로 밀어 볼 수 있습니다.</p>
             <details><summary>날짜별 수치 보기</summary><div><table class="analytics-table"><thead><tr><th scope="col">날짜 (한국 시간)</th><th scope="col">조회수</th></tr></thead><tbody id="viewDays"></tbody></table></div></details>
           </section>
-          <section class="analytics-section"><h3 style="font-size:16px;margin-top:0">표시된 30일 유입</h3><div id="viewSources" class="muted"></div></section>
+          <section class="analytics-section" id="viewSourcesSection"><h3 style="font-size:16px;margin-top:0">표시된 30일 유입</h3><div id="viewSources" class="muted"></div></section>
         </div>
         <p class="muted" style="font-size:12px">조회수는 페이지가 열린 횟수이며 새로고침도 포함됩니다. 방문자 수와는 다릅니다. 집계 설치 이후부터 기록하며 로그인한 관리자의 조회는 제외합니다. 직접 방문에는 구분 표시 없는 QR·앱 유입도 포함됩니다.</p>
         <p class="muted" style="font-size:12px">QR을 별도로 집계하려면 이 주소로 QR을 만드세요: <a style="color:#f0cf78;word-break:break-all" href="https://midnightsunrisebusan.com/?utm_source=qr">https://midnightsunrisebusan.com/?utm_source=qr</a></p>
@@ -131,6 +136,8 @@
     function updateAnalyticsControls(){
       if(!analyticsData)return;
       const data=analyticsData,day=data.selected_day,yesterday=shiftDay(data.today_date,-1);
+      $('allAnalytics').setAttribute('aria-pressed',String(data.source_filter!=='qr'));
+      $('qrAnalytics').setAttribute('aria-pressed',String(data.source_filter==='qr'));
       $('analyticsDay').value=day;$('analyticsDay').max=data.today_date;$('analyticsDay').min=data.started||'';
       $('previousAnalyticsDay').disabled=!!data.started&&day<=data.started;
       $('nextAnalyticsDay').disabled=day>=data.today_date;
@@ -143,7 +150,7 @@
       if(analyticsData&&(day>analyticsData.today_date||(analyticsData.started&&day<analyticsData.started))){updateAnalyticsControls();return}
       loadAnalytics(day);
     }
-    async function loadAnalytics(day=analyticsData?.selected_day){
+    async function loadAnalytics(day=analyticsData?.selected_day,source=analyticsData?.source_filter||'all'){
       if(analyticsLoading)return;
       analyticsLoading=true;
       $('refreshAnalytics').disabled=true;
@@ -151,9 +158,15 @@
       $('analyticsContent').setAttribute('aria-busy','true');
       $('analyticsStatus').textContent='집계를 불러오는 중…';
       try {
-        const data=await api('/api/admin/analytics'+(day?'?day='+encodeURIComponent(day):''));
+        const params=new URLSearchParams({source});if(day)params.set('day',day);
+        const data=await api('/api/admin/analytics?'+params.toString());
         analyticsData=data;
-        $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${label}</span><strong>${formatViews(n)}</strong></div>`).join('');
+        const qrOnly=data.source_filter==='qr',prefix=qrOnly?'QR ':'';
+        $('analyticsFilterNote').textContent=qrOnly?'QR 유입으로 기록된 조회수만 표시합니다. 아래 합계와 그래프 모두 QR 기준입니다.':'모든 유입의 조회수를 표시합니다.';
+        $('hourlyTitle').textContent=prefix+'시간대별 조회수';
+        $('dailyTitle').textContent=prefix+'날짜별 조회수 · 30일';
+        $('viewSourcesSection').hidden=qrOnly;
+        $('viewTotals').innerHTML=[['오늘',data.today],['최근 7일',data.week],['누적',data.total]].map(([label,n])=>`<div class="card"><span class="muted">${prefix}${label}</span><strong>${formatViews(n)}</strong></div>`).join('');
         $('viewSources').textContent=[['qr','QR'],['direct','직접 / 출처 없음'],['search','검색'],['referral','외부 링크']].map(([key,label])=>`${label}: ${formatViews(data.sources[key]||0)}`).join(' · ');
         $('selectedViews').textContent=formatViews(data.selected_total)+'회';
         $('selectedDayLabel').textContent=data.selected_day+' · 한국 시간 00:00–23:59'+(data.selected_day===data.today_date?' · 오늘 진행 중':'');
@@ -167,8 +180,8 @@
         $('analyticsRange').textContent=`${data.range_start} ~ ${data.range_end} · 선택 날짜까지 30일 · 한국 시간`;
         $('periodViews').textContent=formatViews(data.days.reduce((sum,d)=>sum+d.views,0))+'회';
         $('hourlyChartHint').textContent='막대를 누르면 해당 시간의 조회수를 볼 수 있습니다.';
-        drawAnalyticsChart('hourlyChart',data.hours,`${data.selected_day} 시간대별 조회수`);
-        drawAnalyticsChart('dailyChart',[...data.days].reverse(),'날짜별 조회수, 날짜를 선택하면 시간대별 조회 표시',true);
+        drawAnalyticsChart('hourlyChart',data.hours,`${data.selected_day} ${prefix}시간대별 조회수`);
+        drawAnalyticsChart('dailyChart',[...data.days].reverse(),prefix+'날짜별 조회수, 날짜를 선택하면 시간대별 조회 표시',true);
         updateAnalyticsControls();
         $('analyticsContent').hidden=false;
         $('analyticsStatus').textContent=data.started ? `첫 기록: ${data.started} · 방금 업데이트됨` : '아직 기록된 조회가 없습니다.';
@@ -176,6 +189,8 @@
       finally { analyticsLoading=false;$('refreshAnalytics').disabled=false;$('analyticsContent').inert=false;$('analyticsContent').setAttribute('aria-busy','false'); }
     }
     $('refreshAnalytics').onclick=()=>loadAnalytics();
+    $('allAnalytics').onclick=()=>loadAnalytics(analyticsData?.selected_day,'all');
+    $('qrAnalytics').onclick=()=>loadAnalytics(analyticsData?.selected_day,'qr');
     $('analyticsDay').onchange=()=>{if($('analyticsDay').reportValidity())chooseAnalyticsDay($('analyticsDay').value)};
     $('previousAnalyticsDay').onclick=()=>chooseAnalyticsDay(shiftDay(analyticsData.selected_day,-1));
     $('nextAnalyticsDay').onclick=()=>chooseAnalyticsDay(shiftDay(analyticsData.selected_day,1));

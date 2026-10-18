@@ -337,7 +337,7 @@ class ReservationRequest(BaseModel):
     partySize: str = Field(pattern=r'^(?:[1-4]|5\+)$')
     # Keep previous prices valid for forms already open before the price update.
     budget: Literal[
-        '450 USD per guest', '550 USD per guest', '900 USD per guest',
+        '300 USD per guest', '450 USD per guest', '550 USD per guest', '900 USD per guest',
         '350 USD per guest', '400 USD per guest', '500 USD per guest',
         '500000 KRW per guest', '600000 KRW per guest', '1200000 KRW per guest',
     ]
